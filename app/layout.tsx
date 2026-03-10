@@ -41,6 +41,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: ["/api/og"],
   },
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
   robots: { index: true, follow: true },
 };
 

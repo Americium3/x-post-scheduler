@@ -302,13 +302,10 @@ export default function LandingContent({
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
-          <h1
-            className={`font-bold text-gray-900 dark:text-white ${
-              lang === "zh" ? "text-lg sm:text-xl" : "text-xl sm:text-2xl"
-            }`}
-          >
-            {t("appName")}
-          </h1>
+          <Link href={prefix || "/"} className="hover:opacity-80 transition-opacity">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-wordmark.svg" alt="xPilot" width={180} height={36} style={{ height: 36, width: 'auto' }} />
+          </Link>
 
           <div className="hidden md:flex items-center gap-4 text-sm">
             <Link
@@ -450,13 +447,6 @@ export default function LandingContent({
           </div>
         )}
       </header>
-
-      {/* Beta Notice */}
-      <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-center text-sm text-amber-800 dark:text-amber-200">
-          {t("betaNotice")}
-        </div>
-      </div>
 
       {/* Seedance 2.0 Announcement */}
       <div className="bg-linear-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b border-purple-200 dark:border-purple-800">

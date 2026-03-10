@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="64" viewBox="0 0 320 64" fill="none">
+  <!-- Square icon (the "x") -->
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="#2563eb"/>
+
+  <!-- Corner brackets -->
+  <path d="M12,22 L12,12 L22,12" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M42,12 L52,12 L52,22" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12,42 L12,52 L22,52" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M52,42 L52,52 L42,52" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- X in center -->
+  <line x1="22" y1="22" x2="42" y2="42" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <line x1="42" y1="22" x2="22" y2="42" stroke="white" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- "Pilot" as paths — bolder -->
+  <!-- P -->
+  <path d="M76,16 L76,48 M76,16 L92,16 Q101,16 101,24 Q101,32 92,32 L76,32" stroke="#1e293b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- i -->
+  <circle cx="115" cy="17" r="4" fill="#1e293b"/>
+  <line x1="115" y1="26" x2="115" y2="48" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+  <!-- l -->
+  <line x1="132" y1="16" x2="132" y2="48" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+  <!-- o -->
+  <rect x="146" y="26" width="20" height="22" rx="11" stroke="#1e293b" stroke-width="6" fill="none"/>
+  <!-- t -->
+  <line x1="182" y1="18" x2="182" y2="48" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+  <line x1="173" y1="26" x2="191" y2="26" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+</svg>

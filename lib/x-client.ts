@@ -32,6 +32,7 @@ export interface TimelineTweet {
   text: string;
   createdAt: Date | null;
   impressionCount: number | null;
+  mediaUrl: string | null;
 }
 
 export interface TweetMedia {
@@ -58,6 +59,58 @@ export async function getTweetWithMedia(
     if (url) urls.push(url);
   }
   return { mediaUrls: urls };
+}
+
+/**
+ * Batch-fetch media URLs for multiple tweets at once (up to 100 per chunk).
+ * Returns a map of tweetId → first media URL.
+ */
+export async function batchTweetMediaUrls(
+  tweetIds: string[],
+  credentials: XCredentials,
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  if (tweetIds.length === 0) return result;
+
+  const client = createXClient(credentials);
+  const chunks: string[][] = [];
+  for (let i = 0; i < tweetIds.length; i += 100) {
+    chunks.push(tweetIds.slice(i, i + 100));
+  }
+
+  for (const chunk of chunks) {
+    try {
+      const response = await client.v2.tweets(chunk, {
+        expansions: ["attachments.media_keys"],
+        "media.fields": ["url", "preview_image_url", "type"],
+        "tweet.fields": ["attachments"],
+      });
+
+      const mediaItems = response.includes?.media ?? [];
+      const mediaMap = new Map<string, string>();
+      for (const m of mediaItems) {
+        const url =
+          (m as { url?: string; preview_image_url?: string }).url ??
+          (m as { url?: string; preview_image_url?: string }).preview_image_url;
+        if (m.media_key && url) mediaMap.set(m.media_key, url);
+      }
+
+      const tweets = Array.isArray(response.data)
+        ? response.data
+        : response.data
+          ? [response.data]
+          : [];
+      for (const tweet of tweets) {
+        const mediaKeys = tweet.attachments?.media_keys ?? [];
+        const firstUrl = mediaKeys.length > 0 ? mediaMap.get(mediaKeys[0]) : undefined;
+        if (firstUrl) result.set(tweet.id, firstUrl);
+      }
+    } catch {
+      // Silently skip failed chunks
+    }
+  }
+
+  return result;
 }
 
 export async function postTweet(
@@ -97,19 +150,33 @@ export async function getRecentTweets(
   const paginator = await client.v2.userTimeline(me.data.id, {
     max_results: maxResults,
     exclude: ["replies", "retweets"],
-    "tweet.fields": ["created_at", "public_metrics"],
+    "tweet.fields": ["created_at", "public_metrics", "attachments"],
+    expansions: ["attachments.media_keys"],
+    "media.fields": ["url", "preview_image_url", "type"],
   });
 
   const tweets = paginator.tweets ?? [];
+  const mediaItems = paginator.includes?.media ?? [];
+  const mediaMap = new Map<string, string>();
+  for (const m of mediaItems) {
+    const url =
+      (m as { url?: string; preview_image_url?: string }).url ??
+      (m as { url?: string; preview_image_url?: string }).preview_image_url;
+    if (m.media_key && url) mediaMap.set(m.media_key, url);
+  }
+
   const results: TimelineTweet[] = [];
 
   for (const tweet of tweets) {
     if (excludeTweetIds.has(tweet.id)) continue;
+    const mediaKeys = tweet.attachments?.media_keys ?? [];
+    const firstMediaUrl = mediaKeys.length > 0 ? (mediaMap.get(mediaKeys[0]) ?? null) : null;
     results.push({
       id: tweet.id,
       text: tweet.text ?? "",
       createdAt: tweet.created_at ? new Date(tweet.created_at) : null,
       impressionCount: tweet.public_metrics?.impression_count ?? null,
+      mediaUrl: firstMediaUrl,
     });
     if (results.length >= limit) break;
   }

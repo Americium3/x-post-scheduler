@@ -1,6 +1,8 @@
 interface Env {
   APP_BASE_URL: string;
   CRON_SECRET?: string;
+  AUTOCLAW_WORKER_URL?: string;
+  AUTOCLAW_WORKER_SECRET?: string;
 }
 
 interface ScheduledController {
@@ -75,6 +77,23 @@ const worker = {
 
           // Daily follower snapshot for growth tracking
           await safeTrigger(env, "Snapshot-followers", "/api/cron/snapshot-followers");
+
+          // AutoClaw: run next pending task for all active marketing agents
+          if (env.AUTOCLAW_WORKER_URL && env.AUTOCLAW_WORKER_SECRET) {
+            const acRes = await fetch(`${env.AUTOCLAW_WORKER_URL}/cron`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AUTOCLAW_WORKER_SECRET}`,
+              },
+            });
+            if (!acRes.ok) {
+              const body = await acRes.text();
+              console.error(`AutoClaw cron failed (${acRes.status}): ${body}`);
+            } else {
+              console.log("AutoClaw cron triggered successfully");
+            }
+          }
         }
 
         // Note: Tweet metrics sync + content profile auto-refresh happens when

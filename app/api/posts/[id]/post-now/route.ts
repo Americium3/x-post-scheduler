@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { postTweet, postTweetWithMedia } from "@/lib/x-client";
+import { postTweet, postTweetWithMedia, getTweetWithMedia } from "@/lib/x-client";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";
 import { getUserXCredentials } from "@/lib/user-credentials";
 
@@ -64,6 +64,19 @@ export async function POST(
     result = await postTweet(post.content, resolved.credentials);
   }
 
+  // If posted with media, fetch Twitter CDN URLs so images always load
+  let twitterMediaUrls: string | null = null;
+  if (result.success && result.tweetId && mediaUrlList.length > 0) {
+    try {
+      const tweetMedia = await getTweetWithMedia(result.tweetId, resolved.credentials);
+      if (tweetMedia.mediaUrls.length > 0) {
+        twitterMediaUrls = JSON.stringify(tweetMedia.mediaUrls);
+      }
+    } catch {
+      // Non-critical — original mediaUrls still available
+    }
+  }
+
   const updatedPost = await prisma.post.update({
     where: { id },
     data: {
@@ -71,6 +84,7 @@ export async function POST(
       postedAt: result.success ? new Date() : null,
       tweetId: result.tweetId || null,
       error: result.error || null,
+      ...(twitterMediaUrls ? { mediaUrls: twitterMediaUrls } : {}),
     },
   });
 

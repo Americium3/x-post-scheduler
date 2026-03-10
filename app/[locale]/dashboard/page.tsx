@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getRecentTweets } from "@/lib/x-client";
+import { getRecentTweets, batchTweetMediaUrls } from "@/lib/x-client";
 import { getAuthenticatedUser } from "@/lib/auth0";
 import { getUserXCredentials } from "@/lib/user-credentials";
 import { buildSignedBlobProxyUrl } from "@/lib/blob-proxy";
@@ -70,6 +70,35 @@ async function getPosts(userId: string, origin: string) {
     return { dbPosts, mergedPosts: resolvedDbPosts };
   }
 
+  // Backfill media URLs for old posts that have a tweetId but no media
+  const postsNeedingMedia = dbPosts.filter(
+    (p) => p.tweetId && !p.mediaUrls && !p.mediaAssetId && p.status === "posted",
+  );
+  if (postsNeedingMedia.length > 0) {
+    try {
+      const tweetIds = postsNeedingMedia.map((p) => p.tweetId!);
+      const mediaMap = await batchTweetMediaUrls(tweetIds, credentials.credentials);
+      const updates: Promise<unknown>[] = [];
+      for (const post of postsNeedingMedia) {
+        const mediaUrl = mediaMap.get(post.tweetId!);
+        if (mediaUrl) {
+          updates.push(
+            prisma.post.update({
+              where: { id: post.id },
+              data: { mediaUrls: JSON.stringify([mediaUrl]) },
+            }),
+          );
+          // Update the resolved list in-place
+          const resolved = resolvedDbPosts.find((r) => r.id === post.id);
+          if (resolved) resolved.resolvedMediaUrl = mediaUrl;
+        }
+      }
+      await Promise.all(updates);
+    } catch (err) {
+      console.error("Failed to backfill media URLs:", err);
+    }
+  }
+
   try {
     const existingTweetIds = new Set<string>(
       dbPosts
@@ -96,6 +125,7 @@ async function getPosts(userId: string, origin: string) {
       createdAt: tweet.createdAt ?? new Date(0),
       source: "x" as const,
       impressionCount: tweet.impressionCount,
+      resolvedMediaUrl: tweet.mediaUrl,
     }));
 
     return { dbPosts, mergedPosts: [...resolvedDbPosts, ...apiPosts] };
@@ -153,14 +183,13 @@ export default async function Dashboard({
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              <Link
-                href={prefix || "/"}
-                className="hover:opacity-80 transition-opacity"
-              >
-                {tNav("appTitle")}
-              </Link>
-            </h1>
+            <Link
+              href={prefix || "/"}
+              className="hover:opacity-80 transition-opacity"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-wordmark.svg" alt="xPilot" width={180} height={36} style={{ height: 36, width: 'auto' }} />
+            </Link>
             <div className="flex items-center gap-4">
               <nav className="hidden md:flex items-center gap-3 text-sm">
                 <Link

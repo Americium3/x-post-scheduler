@@ -51,14 +51,13 @@ export default async function AnalyticsPage({
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              <Link
-                href={prefix || "/"}
-                className="hover:opacity-80 transition-opacity"
-              >
-                {tNav("appTitle")}
-              </Link>
-            </h1>
+            <Link
+              href={prefix || "/"}
+              className="hover:opacity-80 transition-opacity"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-wordmark.svg" alt="xPilot" width={180} height={36} style={{ height: 36, width: 'auto' }} />
+            </Link>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
               <Link
                 href={`${prefix}/dashboard`}

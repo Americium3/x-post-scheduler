@@ -84,6 +84,7 @@ const TEXT = {
     signInToInteract: "Sign in to interact",
     noComments: "No comments yet",
     deleteComment: "Delete",
+    anonymous: "Anonymous",
   },
   zh: {
     title: "作品社区",
@@ -121,6 +122,7 @@ const TEXT = {
     signInToInteract: "登录后互动",
     noComments: "暂无评论",
     deleteComment: "删除",
+    anonymous: "匿名用户",
   },
 } as const;
 
@@ -383,23 +385,22 @@ function MediaCard({
         </div>
 
         {/* Author + Follow */}
-        {item.user?.name && (
-          <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
             <p className="text-xs text-gray-400 truncate flex items-center gap-1">
-              {t.by} {item.user.name}
-              {isVerifiedMember(
+              {t.by} {item.user?.name ?? t.anonymous}
+              {item.user && isVerifiedMember(
                 item.user.subscriptionTier,
                 item.user.subscriptionStatus,
               ) && (
                 <span
                   className="text-blue-500 font-bold"
-                  title={item.user.subscriptionTier ?? ""}
+                  title={item.user?.subscriptionTier ?? ""}
                 >
                   ✓
                 </span>
               )}
             </p>
-            {authorId && !isOwnContent && (
+            {authorId && item.user?.name && !isOwnContent && (
               <button
                 onClick={() => handleFollow(authorId)}
                 disabled={followBusy || !isLoggedIn}
@@ -413,7 +414,6 @@ function MediaCard({
               </button>
             )}
           </div>
-        )}
 
         {/* Like + Comment row */}
         <div className="flex items-center gap-3 pt-0.5">

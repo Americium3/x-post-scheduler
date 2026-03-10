@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import { postTweet, postTweetWithMedia } from "./x-client";
+import { postTweet, postTweetWithMedia, getTweetWithMedia } from "./x-client";
 import { getUserXCredentials } from "./user-credentials";
 import { generateTweet } from "./openai";
 import { trackTokenUsage, trackWavespeedUsage } from "./usage-tracking";
@@ -100,6 +100,19 @@ export async function processScheduledPosts() {
       result = await postTweet(post.content, resolved.credentials);
     }
 
+    // Fetch Twitter CDN media URLs after posting with media
+    let twitterMediaUrls: string | null = null;
+    if (result.success && result.tweetId && post.mediaAssetId) {
+      try {
+        const tweetMedia = await getTweetWithMedia(result.tweetId, resolved.credentials);
+        if (tweetMedia.mediaUrls.length > 0) {
+          twitterMediaUrls = JSON.stringify(tweetMedia.mediaUrls);
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+
     await prisma.post.update({
       where: { id: post.id },
       data: {
@@ -107,6 +120,7 @@ export async function processScheduledPosts() {
         postedAt: result.success ? new Date() : null,
         tweetId: result.tweetId || null,
         error: result.error || null,
+        ...(twitterMediaUrls ? { mediaUrls: twitterMediaUrls } : {}),
       },
     });
 
@@ -370,6 +384,19 @@ export async function processRecurringSchedules() {
       result = await postTweet(contentToPost, resolved.credentials);
     }
 
+    // Fetch Twitter CDN media URLs for posts with images
+    let twitterMediaUrls: string | null = null;
+    if (result.success && result.tweetId && imageModelId) {
+      try {
+        const tweetMedia = await getTweetWithMedia(result.tweetId, resolved.credentials);
+        if (tweetMedia.mediaUrls.length > 0) {
+          twitterMediaUrls = JSON.stringify(tweetMedia.mediaUrls);
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+
     await prisma.post.create({
       data: {
         content: contentToPost,
@@ -377,6 +404,7 @@ export async function processRecurringSchedules() {
         postedAt: result.success ? new Date() : null,
         tweetId: result.tweetId || null,
         error: result.error || null,
+        mediaUrls: twitterMediaUrls,
         xAccountId: resolved.accountId,
         userId: schedule.userId,
       },
