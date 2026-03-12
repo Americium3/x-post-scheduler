@@ -7,7 +7,7 @@ export interface XCredentials {
   accessTokenSecret: string;
 }
 
-function createXClient(credentials: XCredentials) {
+export function createXClient(credentials: XCredentials) {
   const appKey = credentials.apiKey || process.env.TWITTER_API_KEY;
   const appSecret = credentials.apiSecret || process.env.TWITTER_API_SECRET;
   if (!appKey || !appSecret) {
@@ -318,4 +318,30 @@ export async function getRecentTweetsWithMetrics(
   }
 
   return results;
+}
+
+/**
+ * Verify if a user ID or username exists and return user info
+ */
+export async function verifyUserExists(
+  userIdOrUsername: string,
+  credentials: XCredentials
+): Promise<{ valid: boolean; username?: string; userId?: string; error?: string }> {
+  try {
+    const client = createXClient(credentials);
+
+    // Try to fetch user by username or ID
+    const user = await client.v2.userByUsername(userIdOrUsername);
+
+    return {
+      valid: true,
+      username: user.data.username,
+      userId: user.data.id,
+    };
+  } catch (error) {
+    return {
+      valid: false,
+      error: error instanceof Error ? error.message : "用户不存在或无法访问",
+    };
+  }
 }

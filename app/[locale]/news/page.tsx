@@ -92,12 +92,20 @@ export default async function MediaNewsPage({
       {/* ── Masthead ────────────────────────────────────────────────── */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <Link
-            href={prefix || "/"}
-            className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
-          >
-            ← {isZh ? "返回首页" : "Back to Home"}
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link
+              href={prefix || "/"}
+              className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+            >
+              ← {isZh ? "返回首页" : "Back to Home"}
+            </Link>
+            <Link
+              href={`${prefix}/media-x`}
+              className="text-cyan-600 dark:text-cyan-400 hover:underline text-sm"
+            >
+              {isZh ? "X 账号监控 →" : "X Accounts →"}
+            </Link>
+          </div>
 
           <div className="mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
             <div>

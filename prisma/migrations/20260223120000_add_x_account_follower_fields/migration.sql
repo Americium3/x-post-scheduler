@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "XAccount" ADD COLUMN IF NOT EXISTS "followersCount" INTEGER;
-ALTER TABLE "XAccount" ADD COLUMN IF NOT EXISTS "lastSyncedAt" TIMESTAMP(3);

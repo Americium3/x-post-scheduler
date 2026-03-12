@@ -68,6 +68,14 @@ const worker = {
         if (new Date().getUTCDay() === 1) {
           await safeTrigger(env, "Media-news-weekly", "/api/cron/media-news?period=weekly");
         }
+
+        // 5. Daily media X account monitoring
+        await safeTrigger(env, "Media-x-daily", "/api/cron/media-x?period=daily");
+
+        // 6. Weekly media X account monitoring on Sundays
+        if (new Date().getUTCDay() === 0) {
+          await safeTrigger(env, "Media-x-weekly", "/api/cron/media-x?period=weekly");
+        }
       })(),
     );
   },
