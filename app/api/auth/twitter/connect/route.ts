@@ -10,8 +10,8 @@ export async function GET(request: Request) {
     return unauthorizedResponse();
   }
 
-  const appKey = process.env.TWITTER_API_KEY;
-  const appSecret = process.env.TWITTER_API_SECRET;
+  const appKey = process.env.X_API_KEY || process.env.TWITTER_API_KEY;
+  const appSecret = process.env.X_API_SECRET || process.env.TWITTER_API_SECRET;
   if (!appKey || !appSecret) {
     return NextResponse.json(
       { error: "Twitter app credentials are not configured" },
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   }
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_PUBLIC_URL ||
     (request.headers.get("origin") ?? "http://localhost:3000");
   const callbackUrl = `${baseUrl}/api/auth/twitter/callback`;
 

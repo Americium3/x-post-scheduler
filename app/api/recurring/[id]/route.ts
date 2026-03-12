@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { addDays, addWeeks, addMonths, addHours } from "date-fns";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";
 import { getUserXCredentials } from "@/lib/user-credentials";
-import { IMAGE_MODELS } from "@/lib/wavespeed";
+import { IMAGE_MODELS, isPremiumModel } from "@/lib/wavespeed";
 import {
   decodeRecurringAiPrompt,
   encodeRecurringAiPrompt,
@@ -92,12 +92,19 @@ export async function PATCH(
     membership?.subscriptionStatus,
   );
 
+  // Allow non-members if they have credits (pay-per-use)
   if (!membershipActive) {
-    await prisma.recurringSchedule.updateMany({
-      where: { userId: user.id, isActive: true },
-      data: { isActive: false },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { creditBalanceCents: true },
     });
-    return NextResponse.json({ error: "MEMBERSHIP_REQUIRED" }, { status: 403 });
+    if (!dbUser || dbUser.creditBalanceCents <= 0) {
+      await prisma.recurringSchedule.updateMany({
+        where: { userId: user.id, isActive: true },
+        data: { isActive: false },
+      });
+      return NextResponse.json({ error: "CREDITS_OR_MEMBERSHIP_REQUIRED" }, { status: 403 });
+    }
   }
 
   const body = await request.json();
@@ -144,9 +151,9 @@ export async function PATCH(
   if ("aiPrompt" in body) {
     const aiPrompt =
       typeof body.aiPrompt === "string" ? body.aiPrompt.trim() : "";
-    if (aiPrompt.length > 500) {
+    if (aiPrompt.length > 1000) {
       return NextResponse.json(
-        { error: "AI prompt exceeds 500 characters" },
+        { error: "AI prompt exceeds 1000 characters" },
         { status: 400 },
       );
     }
@@ -165,6 +172,19 @@ export async function PATCH(
           { error: "Invalid image model selection" },
           { status: 400 },
         );
+      }
+      // Premium image models require membership
+      if (isPremiumModel(imageModelId)) {
+        const membershipActive = isVerifiedMember(
+          membership?.subscriptionTier,
+          membership?.subscriptionStatus,
+        );
+        if (!membershipActive) {
+          return NextResponse.json(
+            { error: "Premium models require an active membership." },
+            { status: 403 },
+          );
+        }
       }
       updateData.imageModelId = imageModelId;
     } else {
@@ -242,26 +262,14 @@ export async function PATCH(
   const nextTrendRegion =
     "trendRegion" in updateData ? updateData.trendRegion : existing.trendRegion;
 
-  // Keep tier checks aligned with POST behavior.
-  if (nextTrendRegion || nextFrequency in HOURLY_FREQUENCIES) {
-    if (
-      nextTrendRegion &&
-      !isTierAtLeast(membership?.subscriptionTier, "silver")
-    ) {
+  // Keep tier checks aligned with POST behavior (hourly frequencies only).
+  if (nextFrequency in HOURLY_FREQUENCIES) {
+    const required = HOURLY_FREQUENCIES[nextFrequency].minTier;
+    if (!isTierAtLeast(membership?.subscriptionTier, required)) {
       return NextResponse.json(
-        { error: "TIER_REQUIRED", minTier: "silver" },
+        { error: "TIER_REQUIRED", minTier: required },
         { status: 403 },
       );
-    }
-
-    if (nextFrequency in HOURLY_FREQUENCIES) {
-      const required = HOURLY_FREQUENCIES[nextFrequency].minTier;
-      if (!isTierAtLeast(membership?.subscriptionTier, required)) {
-        return NextResponse.json(
-          { error: "TIER_REQUIRED", minTier: required },
-          { status: 403 },
-        );
-      }
     }
   }
 

@@ -13,6 +13,7 @@ import {
   normalizeTier,
 } from "@/lib/subscription";
 import type { TierKey } from "@/lib/subscription";
+import TeamSection from "@/components/TeamSection";
 
 interface XAccount {
   id: string;
@@ -124,11 +125,63 @@ export default function SettingsPage() {
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const normalizedSubTier = normalizeTier(subTier);
 
+  // Payouts / Stripe Connect
+  const [connectStatus, setConnectStatus] = useState("not_connected");
+  const [availableBalanceCents, setAvailableBalanceCents] = useState(0);
+  const [totalEarnedCents, setTotalEarnedCents] = useState(0);
+  const [totalPaidOutCents, setTotalPaidOutCents] = useState(0);
+  const [pendingPayoutCents, setPendingPayoutCents] = useState(0);
+  const [payoutHistory, setPayoutHistory] = useState<
+    {
+      id: string;
+      amountCents: number;
+      feeCents: number;
+      netAmountCents: number;
+      method: string;
+      destination: string;
+      status: string;
+      completedAt: string | null;
+      createdAt: string;
+    }[]
+  >([]);
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [payoutLoading, setPayoutLoading] = useState(false);
+  const [payoutMethod, setPayoutMethod] = useState<"standard" | "instant">(
+    "standard",
+  );
+
+  // ACH Direct
+  const [achStatus, setAchStatus] = useState("not_connected");
+  const [achBankLast4, setAchBankLast4] = useState<string | null>(null);
+  const [achBankName, setAchBankName] = useState<string | null>(null);
+  const [achLoading, setAchLoading] = useState(false);
+  const [achRemoving, setAchRemoving] = useState(false);
+  const [showAchForm, setShowAchForm] = useState(false);
+  const [achHolderName, setAchHolderName] = useState("");
+  const [achRoutingNumber, setAchRoutingNumber] = useState("");
+  const [achAccountNumber, setAchAccountNumber] = useState("");
+  const [achAccountType, setAchAccountType] = useState<"checking" | "savings">(
+    "checking",
+  );
+  const [payoutDestination, setPayoutDestination] = useState<"connect" | "ach">(
+    "connect",
+  );
+
   useEffect(() => {
     if (!authLoading && user) {
       void fetchData();
     }
   }, [authLoading, user]);
+
+  // Auto-select payout destination based on active methods
+  useEffect(() => {
+    if (connectStatus === "active" && achStatus !== "active") {
+      setPayoutDestination("connect");
+    } else if (achStatus === "active" && connectStatus !== "active") {
+      setPayoutDestination("ach");
+      setPayoutMethod("standard");
+    }
+  }, [connectStatus, achStatus]);
 
   // Auto-refresh subscription status when page becomes visible or gets focus
   useEffect(() => {
@@ -175,6 +228,30 @@ export default function SettingsPage() {
         text: tr(
           "X authorization failed. Please try again.",
           "X 授权失败，请重试。",
+        ),
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+    // Handle Stripe Connect return
+    if (params.get("connect") === "complete") {
+      setMessage({
+        type: "success",
+        text: tr(
+          "Stripe account connected! Verifying status...",
+          "Stripe 账户已连接！正在验证状态...",
+        ),
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+      void fetchData();
+      return;
+    }
+    if (params.get("connect") === "refresh") {
+      setMessage({
+        type: "error",
+        text: tr(
+          "Stripe onboarding session expired. Please try again.",
+          "Stripe 入驻会话已过期，请重试。",
         ),
       });
       window.history.replaceState({}, "", window.location.pathname);
@@ -316,12 +393,15 @@ export default function SettingsPage() {
 
   async function fetchData() {
     try {
-      const [settingsRes, usageRes, creditsRes, subRes] = await Promise.all([
-        fetch("/api/settings"),
-        fetch("/api/usage?days=30"),
-        fetch("/api/credits"),
-        fetch("/api/me/subscription"),
-      ]);
+      const [settingsRes, usageRes, creditsRes, subRes, connectRes, payoutRes] =
+        await Promise.all([
+          fetch("/api/settings"),
+          fetch("/api/usage?days=30"),
+          fetch("/api/credits"),
+          fetch("/api/me/subscription"),
+          fetch("/api/stripe/connect"),
+          fetch("/api/stripe/payout"),
+        ]);
       if (!settingsRes.ok) return;
       const data = await settingsRes.json();
       setAccounts(Array.isArray(data.accounts) ? data.accounts : []);
@@ -343,6 +423,24 @@ export default function SettingsPage() {
         setSubStatus(subData.status);
         setSubPeriodEnd(subData.periodEnd);
         setAccountLimit(subData.accountLimit ?? 1);
+      }
+      if (connectRes.ok) {
+        const cData = await connectRes.json();
+        setConnectStatus(cData.status ?? "not_connected");
+        setAvailableBalanceCents(cData.availableCents ?? 0);
+        setTotalEarnedCents(cData.totalEarnedCents ?? 0);
+        setTotalPaidOutCents(cData.totalPaidOutCents ?? 0);
+        setPendingPayoutCents(cData.pendingPayoutCents ?? 0);
+        // ACH data
+        if (cData.ach) {
+          setAchStatus(cData.ach.status ?? "not_connected");
+          setAchBankLast4(cData.ach.bankLast4 ?? null);
+          setAchBankName(cData.ach.bankName ?? null);
+        }
+      }
+      if (payoutRes.ok) {
+        const pData = await payoutRes.json();
+        setPayoutHistory(pData.payouts ?? []);
       }
     } finally {
       setLoading(false);
@@ -374,6 +472,151 @@ export default function SettingsPage() {
       });
     } finally {
       setTopupLoading(null);
+    }
+  }
+
+  async function handleConnectStripe() {
+    setConnectLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/stripe/connect", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setMessage({
+          type: "error",
+          text:
+            data.error ||
+            tr(
+              "Failed to start Stripe onboarding",
+              "无法启动 Stripe 入驻",
+            ),
+        });
+      }
+    } catch {
+      setMessage({
+        type: "error",
+        text: tr(
+          "Failed to start Stripe onboarding",
+          "无法启动 Stripe 入驻",
+        ),
+      });
+    } finally {
+      setConnectLoading(false);
+    }
+  }
+
+  async function handleRequestPayout() {
+    setPayoutLoading(true);
+    setMessage(null);
+    try {
+      const effectiveMethod =
+        payoutDestination === "ach" ? "standard" : payoutMethod;
+      const res = await fetch("/api/stripe/payout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          method: effectiveMethod,
+          destination: payoutDestination,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({
+          type: "success",
+          text: tr(
+            `Payout of $${(data.netAmountCents / 100).toFixed(2)} initiated!`,
+            `提现 $${(data.netAmountCents / 100).toFixed(2)} 已发起！`,
+          ),
+        });
+        await fetchData();
+      } else {
+        setMessage({
+          type: "error",
+          text: data.error || tr("Payout failed", "提现失败"),
+        });
+      }
+    } catch {
+      setMessage({
+        type: "error",
+        text: tr("Payout failed", "提现失败"),
+      });
+    } finally {
+      setPayoutLoading(false);
+    }
+  }
+
+  async function handleSetupAch() {
+    setAchLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/stripe/ach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountHolderName: achHolderName,
+          routingNumber: achRoutingNumber,
+          accountNumber: achAccountNumber,
+          accountType: achAccountType,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({
+          type: "success",
+          text: tr(
+            `Bank account ending in ${data.bankLast4} connected!`,
+            `银行账户尾号 ${data.bankLast4} 已连接！`,
+          ),
+        });
+        setShowAchForm(false);
+        setAchHolderName("");
+        setAchRoutingNumber("");
+        setAchAccountNumber("");
+        await fetchData();
+      } else {
+        setMessage({
+          type: "error",
+          text:
+            data.error ||
+            tr("Failed to set up bank account", "银行账户设置失败"),
+        });
+      }
+    } catch {
+      setMessage({
+        type: "error",
+        text: tr("Failed to set up bank account", "银行账户设置失败"),
+      });
+    } finally {
+      setAchLoading(false);
+    }
+  }
+
+  async function handleRemoveAch() {
+    if (!confirm(tr("Remove ACH bank account?", "确认移除银行账户？")))
+      return;
+    setAchRemoving(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/stripe/ach", { method: "DELETE" });
+      if (res.ok) {
+        setMessage({
+          type: "success",
+          text: tr("Bank account removed", "银行账户已移除"),
+        });
+        await fetchData();
+      } else {
+        const data = await res.json();
+        setMessage({
+          type: "error",
+          text: data.error || tr("Failed", "失败"),
+        });
+      }
+    } catch {
+      setMessage({ type: "error", text: tr("Failed", "失败") });
+    } finally {
+      setAchRemoving(false);
     }
   }
 
@@ -779,6 +1022,17 @@ export default function SettingsPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {message && (
+          <div
+            className={`rounded-lg p-4 mb-6 ${
+              message.type === "success"
+                ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200"
+                : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -1611,15 +1865,444 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {/* Cash & Payouts */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            {tr("Cash & Payouts", "现金与提现")}
+          </h2>
+
+          {/* Balance summary — always visible */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {tr("Cash Available", "可提现现金")}
+              </p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                ${(availableBalanceCents / 100).toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {tr("Cash Earned", "现金收入")}
+              </p>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                ${(totalEarnedCents / 100).toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {tr("Cash Withdrawn", "已提现金额")}
+              </p>
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                ${(totalPaidOutCents / 100).toFixed(2)}
+              </p>
+            </div>
+            {pendingPayoutCents > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {tr("Pending", "处理中")}
+                </p>
+                <p className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
+                  ${(pendingPayoutCents / 100).toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Withdrawal Methods */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              {tr("Withdrawal Methods", "提现方式")}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Stripe Connect card */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {tr("Stripe Connect", "Stripe 连接")}
+                  </h3>
+                  {connectStatus === "active" && (
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                  )}
+                  {connectStatus === "restricted" && (
+                    <span className="inline-block w-2 h-2 rounded-full bg-yellow-500" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  {tr(
+                    "Standard (free) + Instant (1.5% fee)",
+                    "标准（免费）+ 即时（1.5% 手续费）",
+                  )}
+                </p>
+                {connectStatus === "active" ? (
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {tr("Active", "已激活")}
+                  </p>
+                ) : connectStatus === "restricted" ? (
+                  <button
+                    onClick={handleConnectStripe}
+                    disabled={connectLoading}
+                    className="px-4 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 transition-colors"
+                  >
+                    {connectLoading
+                      ? tr("Redirecting...", "跳转中...")
+                      : tr("Update Account", "更新账户")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleConnectStripe}
+                    disabled={connectLoading}
+                    className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors font-semibold"
+                  >
+                    {connectLoading
+                      ? tr("Redirecting...", "跳转中...")
+                      : connectStatus === "pending"
+                        ? tr("Complete Onboarding", "完成入驻")
+                        : tr("Connect Stripe", "连接 Stripe")}
+                  </button>
+                )}
+              </div>
+
+              {/* ACH Bank Transfer card */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {tr("ACH Bank Transfer", "ACH 银行转账")}
+                  </h3>
+                  {achStatus === "active" && (
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  {tr(
+                    "Free, 2-3 business days (US banks)",
+                    "免费，2-3个工作日（美国银行）",
+                  )}
+                </p>
+                {achStatus === "active" ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {achBankName} ****{achBankLast4}
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowAchForm(true)}
+                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        {tr("Change Bank", "更换银行")}
+                      </button>
+                      <button
+                        onClick={handleRemoveAch}
+                        disabled={achRemoving}
+                        className="text-xs text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+                      >
+                        {achRemoving ? "..." : tr("Remove", "移除")}
+                      </button>
+                    </div>
+                  </div>
+                ) : achStatus === "restricted" ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                      {tr(
+                        "Additional verification needed",
+                        "需要补充验证信息",
+                      )}
+                    </p>
+                    <button
+                      onClick={() => setShowAchForm(true)}
+                      className="px-4 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                    >
+                      {tr("Update Bank", "更新银行")}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowAchForm(true)}
+                    className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors font-semibold"
+                  >
+                    {tr("Add Bank Account", "添加银行账户")}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ACH Setup Form */}
+          {showAchForm && (
+            <div className="mt-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/40">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
+                {tr("Bank Account Details", "银行账户信息")}
+              </h3>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder={tr(
+                    "Account Holder Name",
+                    "账户持有人姓名",
+                  )}
+                  value={achHolderName}
+                  onChange={(e) => setAchHolderName(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    placeholder={tr(
+                      "Routing Number (9 digits)",
+                      "路由号码（9位）",
+                    )}
+                    value={achRoutingNumber}
+                    onChange={(e) =>
+                      setAchRoutingNumber(
+                        e.target.value.replace(/\D/g, "").slice(0, 9),
+                      )
+                    }
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                  <input
+                    type="text"
+                    placeholder={tr("Account Number", "账户号码")}
+                    value={achAccountNumber}
+                    onChange={(e) =>
+                      setAchAccountNumber(
+                        e.target.value.replace(/\D/g, ""),
+                      )
+                    }
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <label className="inline-flex items-center gap-1.5 text-sm">
+                    <input
+                      type="radio"
+                      name="achAccountType"
+                      value="checking"
+                      checked={achAccountType === "checking"}
+                      onChange={() => setAchAccountType("checking")}
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {tr("Checking", "支票账户")}
+                    </span>
+                  </label>
+                  <label className="inline-flex items-center gap-1.5 text-sm">
+                    <input
+                      type="radio"
+                      name="achAccountType"
+                      value="savings"
+                      checked={achAccountType === "savings"}
+                      onChange={() => setAchAccountType("savings")}
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {tr("Savings", "储蓄账户")}
+                    </span>
+                  </label>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={handleSetupAch}
+                    disabled={
+                      achLoading ||
+                      !achHolderName.trim() ||
+                      achRoutingNumber.length !== 9 ||
+                      achAccountNumber.length < 4
+                    }
+                    className="px-4 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  >
+                    {achLoading
+                      ? tr("Setting up...", "设置中...")
+                      : tr("Connect Bank", "连接银行")}
+                  </button>
+                  <button
+                    onClick={() => setShowAchForm(false)}
+                    className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  >
+                    {tr("Cancel", "取消")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Withdraw section */}
+          {(connectStatus === "active" || achStatus === "active") &&
+            availableBalanceCents >= 100 && (
+              <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                {/* Destination selector (only if both active) */}
+                {connectStatus === "active" && achStatus === "active" && (
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {tr("Withdraw to:", "提现至：")}
+                    </span>
+                    <label className="inline-flex items-center gap-1.5 text-sm">
+                      <input
+                        type="radio"
+                        name="payoutDest"
+                        value="connect"
+                        checked={payoutDestination === "connect"}
+                        onChange={() => setPayoutDestination("connect")}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {tr("Stripe Connect", "Stripe 连接")}
+                      </span>
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 text-sm">
+                      <input
+                        type="radio"
+                        name="payoutDest"
+                        value="ach"
+                        checked={payoutDestination === "ach"}
+                        onChange={() => {
+                          setPayoutDestination("ach");
+                          setPayoutMethod("standard");
+                        }}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {tr("ACH Bank", "ACH 银行")}
+                        {achBankLast4 && (
+                          <span className="text-gray-400 ml-1">
+                            (****{achBankLast4})
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                {/* Speed selector (only for Stripe Connect destination) */}
+                {payoutDestination === "connect" && (
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center gap-1.5 text-sm">
+                      <input
+                        type="radio"
+                        name="payoutMethod"
+                        value="standard"
+                        checked={payoutMethod === "standard"}
+                        onChange={() => setPayoutMethod("standard")}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {tr("Standard (Free)", "标准（免费）")}
+                      </span>
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 text-sm">
+                      <input
+                        type="radio"
+                        name="payoutMethod"
+                        value="instant"
+                        checked={payoutMethod === "instant"}
+                        onChange={() => setPayoutMethod("instant")}
+                      />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {tr("Instant (1.5% fee)", "即时（1.5% 手续费）")}
+                      </span>
+                    </label>
+                    {payoutMethod === "instant" && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {tr("Fee:", "手续费：")} $
+                        {(
+                          Math.ceil(availableBalanceCents * 0.015) / 100
+                        ).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {payoutDestination === "ach" && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {tr(
+                      "Standard speed only (free, 2-3 business days)",
+                      "仅标准速度（免费，2-3个工作日）",
+                    )}
+                  </p>
+                )}
+
+                <button
+                  onClick={handleRequestPayout}
+                  disabled={payoutLoading}
+                  className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-semibold"
+                >
+                  {payoutLoading
+                    ? tr("Processing...", "处理中...")
+                    : tr(
+                        `Withdraw $${(availableBalanceCents / 100).toFixed(2)}`,
+                        `提现 $${(availableBalanceCents / 100).toFixed(2)}`,
+                      )}
+                </button>
+              </div>
+            )}
+
+          {/* Withdrawal history */}
+          {payoutHistory.length > 0 && (
+            <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {tr("Withdrawal History", "提现记录")}
+              </p>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {payoutHistory.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm py-1"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={`font-mono font-medium shrink-0 ${
+                          p.status === "completed"
+                            ? "text-green-600 dark:text-green-400"
+                            : p.status === "failed"
+                              ? "text-red-500 dark:text-red-400"
+                              : "text-yellow-600 dark:text-yellow-400"
+                        }`}
+                      >
+                        ${(p.netAmountCents / 100).toFixed(2)}
+                      </span>
+                      <span className="text-gray-600 dark:text-gray-400 truncate">
+                        {p.destination === "ach"
+                          ? tr("ACH Bank", "ACH 银行")
+                          : p.method === "instant"
+                            ? tr("Instant", "即时")
+                            : tr("Standard", "标准")}
+                        {p.feeCents > 0 &&
+                          ` (${tr("fee", "费")}: $${(p.feeCents / 100).toFixed(2)})`}
+                      </span>
+                      <span
+                        className={`text-xs px-1.5 py-0.5 rounded ${
+                          p.status === "completed"
+                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                            : p.status === "failed"
+                              ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                              : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"
+                        }`}
+                      >
+                        {p.status === "completed"
+                          ? tr("Completed", "已完成")
+                          : p.status === "failed"
+                            ? tr("Failed", "失败")
+                            : tr("Pending", "处理中")}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                      {format(new Date(p.createdAt), "MMM d, h:mm a")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {tr("Credits & Billing", "积分与账单")}
+              {tr("API Credits", "API 积分")}
             </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {tr(
+                "Credits are used for AI generation features. Not withdrawable as cash.",
+                "积分用于 AI 生成功能，不可提现为现金。",
+              )}
+            </p>
             <div className="mt-4 flex flex-col sm:flex-row sm:items-end gap-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {tr("Current Balance", "当前余额")}
+                  {tr("Credit Balance", "积分余额")}
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   ${(credits.balanceCents / 100).toFixed(2)}
@@ -1644,8 +2327,8 @@ export default function SettingsPage() {
                     {topupLoading === amount
                       ? tr("Loading...", "加载中...")
                       : tr(
-                          `Add $${(amount / 100).toFixed(2)}`,
-                          `充值 $${(amount / 100).toFixed(2)}`,
+                          `Add Credits $${(amount / 100).toFixed(2)}`,
+                          `充值积分 $${(amount / 100).toFixed(2)}`,
                         )}
                   </button>
                 ))}
@@ -1654,7 +2337,7 @@ export default function SettingsPage() {
             {credits.transactions.length > 0 && (
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {tr("Recent Transactions", "最近交易")}
+                  {tr("Credit Transactions", "积分交易记录")}
                 </p>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {credits.transactions.map((tx) => (
@@ -1772,17 +2455,42 @@ export default function SettingsPage() {
         </div>
         {/* end Credits+AI Usage grid */}
 
-        {message && (
-          <div
-            className={`rounded-lg p-4 mb-6 ${
-              message.type === "success"
-                ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200"
-                : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200"
-            }`}
+        {/* Teams section */}
+        <div className="mt-6">
+          <TeamSection tr={tr} />
+        </div>
+
+        {/* Developer & API section */}
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link
+            href={`${pathname.startsWith("/zh") ? "/zh" : ""}/settings/api-keys`}
+            className="block bg-white dark:bg-gray-800 rounded-lg shadow p-5 hover:ring-2 hover:ring-blue-500 transition-all"
           >
-            {message.text}
-          </div>
-        )}
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              {tr("API Keys", "API 密钥")}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {tr(
+                "Manage API keys for programmatic access to xPilot",
+                "管理 API 密钥，通过 REST API 访问 xPilot",
+              )}
+            </p>
+          </Link>
+          <Link
+            href={`${pathname.startsWith("/zh") ? "/zh" : ""}/settings/provider-keys`}
+            className="block bg-white dark:bg-gray-800 rounded-lg shadow p-5 hover:ring-2 hover:ring-blue-500 transition-all"
+          >
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              {tr("Provider API Keys (BYOK)", "第三方 API Key (自带 Key)")}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {tr(
+                "Use your own Seedance API key to bypass platform credits",
+                "填入你自己的 Seedance API Key，免除平台费用",
+              )}
+            </p>
+          </Link>
+        </div>
       </main>
     </div>
   );

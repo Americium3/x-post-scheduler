@@ -16,6 +16,7 @@
     "@auth0/nextjs-auth0": "^4.14.1",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.19.2",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/fluent-ffmpeg": "^2.1.28",
     "@vercel/analytics": "^1.6.1",
     "@vercel/blob": "^2.3.0",
@@ -28,9 +29,9 @@
     "next-intl": "^4.8.3",
     "node-cron": "^4.2.1",
     "openai": "^6.18.0",
-    "prisma": "^6.19.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.7.0",
     "stripe": "^20.3.1",
     "twitter-api-v2": "^1.29.0"
@@ -45,6 +46,7 @@
     "dotenv": "^17.2.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "prisma": "^6.19.2",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

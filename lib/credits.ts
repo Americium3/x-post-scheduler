@@ -1,5 +1,6 @@
 import { prisma } from "./db";
 import type { TokenUsage } from "./usage-tracking";
+import { deductTeamCredits as deductFromTeam } from "./team";
 
 // LLM pricing in cents per 1M tokens (base cost before markup).
 // Covers both legacy direct-API keys and AI Gateway model IDs (provider/model format).
@@ -40,10 +41,10 @@ function parsePositiveMultiplier(raw: string | undefined, fallback: number) {
   return parsed;
 }
 
-// OpenAI pricing multiplier (configurable via OPENAI_CHARGE_MULTIPLIER)
+// Text/LLM pricing multiplier (configurable via OPENAI_CHARGE_MULTIPLIER)
 const MARKUP_MULTIPLIER = parsePositiveMultiplier(
   process.env.OPENAI_CHARGE_MULTIPLIER,
-  60,
+  20,
 );
 
 /** Flat fee in cents for agent service calls (no per-token data available). */
@@ -100,6 +101,9 @@ const WAVESPEED_MODEL_BASE_COST_CENTS: Record<string, number> = {
   "alibaba/wan-2.6/text-to-video": 40,
   "bytedance/seedance-v1.5-pro/text-to-video": 50,
   "kwaivgi/kling-video-o3-std/text-to-video": 60,
+  // Seedance 2.0 (via seedanceapi.org)
+  "seedance-2.0/text-to-video": 60,
+  "seedance-2.0/image-to-video": 60,
 };
 
 /**
@@ -186,15 +190,35 @@ export async function deductCredits(params: {
   usage: TokenUsage;
   model?: string;
   source: string;
+  teamId?: string;
 }): Promise<{ costCents: number; newBalance: number }> {
   const rawCostCents = calculateCostCents(params.usage, params.model);
   const discountMultiplier = await getSubscriptionDiscount(params.userId);
   const costCents = Math.max(1, Math.ceil(rawCostCents * discountMultiplier));
   const savedCents = rawCostCents - costCents;
 
-  const updatedUser = await prisma.user.update({
-    where: { id: params.userId },
+  // If team context, deduct from team balance instead
+  if (params.teamId) {
+    return deductFromTeam({
+      teamId: params.teamId,
+      costCents,
+      performedBy: params.userId,
+      description: `AI generation (${params.source}) - ${params.usage.totalTokens} tokens`,
+    });
+  }
+
+  // Atomic deduction with negative-balance guard
+  const result = await prisma.user.updateMany({
+    where: { id: params.userId, creditBalanceCents: { gte: costCents } },
     data: { creditBalanceCents: { decrement: costCents } },
+  });
+
+  if (result.count === 0) {
+    throw new Error("INSUFFICIENT_CREDITS");
+  }
+
+  const updatedUser = await prisma.user.findUniqueOrThrow({
+    where: { id: params.userId },
     select: { creditBalanceCents: true },
   });
 
@@ -224,6 +248,7 @@ export async function deductFlatFee(params: {
   userId: string;
   feeCents: number;
   source: string;
+  teamId?: string;
 }): Promise<{ costCents: number; newBalance: number }> {
   const discountMultiplier = await getSubscriptionDiscount(params.userId);
   const costCents = Math.max(
@@ -232,9 +257,28 @@ export async function deductFlatFee(params: {
   );
   const savedCents = params.feeCents - costCents;
 
-  const updatedUser = await prisma.user.update({
-    where: { id: params.userId },
+  // If team context, deduct from team balance instead
+  if (params.teamId) {
+    return deductFromTeam({
+      teamId: params.teamId,
+      costCents,
+      performedBy: params.userId,
+      description: `AI generation (${params.source}) - flat fee`,
+    });
+  }
+
+  // Atomic deduction with negative-balance guard
+  const result = await prisma.user.updateMany({
+    where: { id: params.userId, creditBalanceCents: { gte: costCents } },
     data: { creditBalanceCents: { decrement: costCents } },
+  });
+
+  if (result.count === 0) {
+    throw new Error("INSUFFICIENT_CREDITS");
+  }
+
+  const updatedUser = await prisma.user.findUniqueOrThrow({
+    where: { id: params.userId },
     select: { creditBalanceCents: true },
   });
 
@@ -265,11 +309,22 @@ export async function deductWavespeedCredits(params: {
   mediaType: "image" | "video";
   source: string;
   taskId?: string;
+  teamId?: string;
 }): Promise<{ costCents: number; newBalance: number }> {
   const rawCostCents = getWavespeedFeeCents(params.modelId, params.mediaType);
   const discountMultiplier = await getSubscriptionDiscount(params.userId);
   const costCents = Math.max(1, Math.ceil(rawCostCents * discountMultiplier));
   const savedCents = rawCostCents - costCents;
+
+  // If team context, deduct from team balance instead
+  if (params.teamId) {
+    return deductFromTeam({
+      teamId: params.teamId,
+      costCents,
+      performedBy: params.userId,
+      description: `WaveSpeed ${params.mediaType} generation (${params.source})`,
+    });
+  }
 
   const updated = await prisma.user.updateMany({
     where: {
@@ -379,6 +434,31 @@ export async function getTrialUserIdFromRequest(
     ipAddress,
     userAgent,
   };
+}
+
+/** Platform-wide daily trial spending cap in cents ($10). */
+const PLATFORM_DAILY_TRIAL_CAP_CENTS = 1000;
+
+/**
+ * Check if the platform-wide daily trial spending cap has been reached.
+ * Sums all deduction transactions from trial users (userId starts with "trial-") today.
+ */
+export async function isDailyTrialCapReached(): Promise<boolean> {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  const result = await prisma.creditTransaction.aggregate({
+    where: {
+      userId: { startsWith: "trial-" },
+      type: "deduction",
+      createdAt: { gte: today },
+    },
+    _sum: { amountCents: true },
+  });
+
+  // amountCents is negative for deductions, so total spending = abs(sum)
+  const totalSpent = Math.abs(result._sum.amountCents ?? 0);
+  return totalSpent >= PLATFORM_DAILY_TRIAL_CAP_CENTS;
 }
 
 /**

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth0";
-import { submitImageTask, IMAGE_MODELS } from "@/lib/wavespeed";
+import { submitImageTask, IMAGE_MODELS, isPremiumModel } from "@/lib/wavespeed";
+import { prisma } from "@/lib/db";
+import { isVerifiedMember } from "@/lib/subscription";
 import { trackWavespeedUsage } from "@/lib/usage-tracking";
 import {
   deductWavespeedCredits,
   getCreditBalance,
   getWavespeedFeeCents,
   getOrCreateTrialUser,
+  isDailyTrialCapReached,
 } from "@/lib/credits";
 
 function getClientIp(request: NextRequest): string {
@@ -35,6 +38,16 @@ export async function POST(request: NextRequest) {
 
   // If not authenticated, use trial user
   if (!user) {
+    // Check platform-wide daily trial cap
+    if (await isDailyTrialCapReached()) {
+      return NextResponse.json(
+        {
+          error: "Daily trial limit reached. Sign up for a free account to continue!",
+          trialMessage: "The platform's daily trial quota has been reached. Sign up to get $5 free credits!",
+        },
+        { status: 402 },
+      );
+    }
     const trialUserId = await getOrCreateTrialUser(clientIp, userAgent);
     user = {
       id: trialUserId,
@@ -43,6 +56,7 @@ export async function POST(request: NextRequest) {
       name: "Trial User",
       picture: null,
       language: "en",
+      weixinCookie: null,
     };
   }
 
@@ -78,6 +92,20 @@ export async function POST(request: NextRequest) {
   const validModel = IMAGE_MODELS.find((m) => m.id === modelId);
   if (!validModel) {
     return NextResponse.json({ error: "Invalid model" }, { status: 400 });
+  }
+
+  // Premium model restriction: members only
+  if (isPremiumModel(modelId) && !user.id.startsWith("trial-")) {
+    const membership = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { subscriptionTier: true, subscriptionStatus: true },
+    });
+    if (!isVerifiedMember(membership?.subscriptionTier, membership?.subscriptionStatus)) {
+      return NextResponse.json(
+        { error: "Premium models require an active membership. Please subscribe to access this model." },
+        { status: 403 },
+      );
+    }
   }
 
   const feeCents = getWavespeedFeeCents(modelId, "image");
@@ -148,7 +176,8 @@ export async function POST(request: NextRequest) {
     } catch (usageError) {
       console.error("Failed to track WaveSpeed image usage:", usageError);
     }
-    return NextResponse.json({ task });
+    const remainingCents = await getCreditBalance(user.id);
+    return NextResponse.json({ task, remainingCents });
   } catch (error) {
     console.error("WaveSpeed image error:", error);
     return NextResponse.json(

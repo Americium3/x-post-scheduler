@@ -152,7 +152,7 @@ export default function UserMenu({
                 onClick={() => setIsOpen(false)}
                 className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                {locale === "zh" ? "仪表盘" : "Dashboard"}
+                {tNav("dashboard") || "Dashboard"}
               </Link>
               <Link
                 href={`${prefix}/gallery`}
@@ -190,11 +190,25 @@ export default function UserMenu({
                 {tNav("knowledge")}
               </Link>
               <Link
+                href={`${prefix}/campaigns`}
+                onClick={() => setIsOpen(false)}
+                className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {tNav("campaigns")}
+              </Link>
+              <Link
+                href={`${prefix}/analytics`}
+                onClick={() => setIsOpen(false)}
+                className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {tNav("analytics")}
+              </Link>
+              <Link
                 href={`${prefix}/news`}
                 onClick={() => setIsOpen(false)}
                 className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                {tNav("mediaNews")}
+                {tNav("intelligence")}
               </Link>
             </div>
 

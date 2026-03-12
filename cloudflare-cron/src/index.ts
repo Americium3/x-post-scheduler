@@ -1,6 +1,8 @@
 interface Env {
   APP_BASE_URL: string;
   CRON_SECRET?: string;
+  AUTOCLAW_WORKER_URL?: string;
+  AUTOCLAW_WORKER_SECRET?: string;
 }
 
 interface ScheduledController {
@@ -52,30 +54,51 @@ const worker = {
       throw new Error("Missing APP_BASE_URL worker secret/var.");
     }
 
-    // Single daily trigger: run all daily jobs sequentially
+    // Determine which slot we're in based on current UTC hour
+    const hour = new Date().getUTCHours();
+
     ctx.waitUntil(
       (async () => {
-        // 1. Process any scheduled posts that are due
+        // Every slot (2x/day at 01:00, 13:00 UTC): process scheduled posts
         await safeTrigger(env, "Scheduler", "/api/scheduler");
 
-        // 2. Generate daily content for users
-        await safeTrigger(env, "Daily-generate", "/api/daily-generate");
+        // Slot 1 (UTC 01:00): Full daily pipeline
+        if (hour === 1) {
+          // Generate daily content for users
+          await safeTrigger(env, "Daily-generate", "/api/daily-generate");
 
-        // 3. Daily media industry news
-        await safeTrigger(env, "Media-news-daily", "/api/cron/media-news?period=daily");
+          // Daily media industry news
+          await safeTrigger(env, "Media-news-daily", "/api/cron/media-news?period=daily");
 
-        // 4. Weekly media news on Mondays
-        if (new Date().getUTCDay() === 1) {
-          await safeTrigger(env, "Media-news-weekly", "/api/cron/media-news?period=weekly");
+          // Weekly media news on Mondays
+          if (new Date().getUTCDay() === 1) {
+            await safeTrigger(env, "Media-news-weekly", "/api/cron/media-news?period=weekly");
+          }
+
+          // Daily follower snapshot for growth tracking
+          await safeTrigger(env, "Snapshot-followers", "/api/cron/snapshot-followers");
+
+          // AutoClaw: run next pending task for all active marketing agents
+          if (env.AUTOCLAW_WORKER_URL && env.AUTOCLAW_WORKER_SECRET) {
+            const acRes = await fetch(`${env.AUTOCLAW_WORKER_URL}/cron`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AUTOCLAW_WORKER_SECRET}`,
+              },
+            });
+            if (!acRes.ok) {
+              const body = await acRes.text();
+              console.error(`AutoClaw cron failed (${acRes.status}): ${body}`);
+            } else {
+              console.log("AutoClaw cron triggered successfully");
+            }
+          }
         }
 
-        // 5. Daily media X account monitoring
-        await safeTrigger(env, "Media-x-daily", "/api/cron/media-x?period=daily");
-
-        // 6. Weekly media X account monitoring on Sundays
-        if (new Date().getUTCDay() === 0) {
-          await safeTrigger(env, "Media-x-weekly", "/api/cron/media-x?period=weekly");
-        }
+        // Note: Tweet metrics sync + content profile auto-refresh happens when
+        // users manually sync via POST /api/analytics/sync-tweet-metrics.
+        // The follower snapshot cron (Slot 1) tracks growth data automatically.
       })(),
     );
   },

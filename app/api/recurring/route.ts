@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { addDays, addWeeks, addMonths, addHours } from "date-fns";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";
 import { getUserXCredentials } from "@/lib/user-credentials";
-import { IMAGE_MODELS } from "@/lib/wavespeed";
+import { IMAGE_MODELS, isPremiumModel } from "@/lib/wavespeed";
 import {
   decodeRecurringAiPrompt,
   encodeRecurringAiPrompt,
@@ -76,13 +76,6 @@ export async function GET() {
 
   const membership = await getMembership(user.id);
 
-  if (!membership.active) {
-    await prisma.recurringSchedule.updateMany({
-      where: { userId: user.id, isActive: true },
-      data: { isActive: false },
-    });
-  }
-
   const [schedules, recurringUsage, dbUser] = await Promise.all([
     prisma.recurringSchedule.findMany({
       where: { userId: user.id },
@@ -101,6 +94,16 @@ export async function GET() {
       select: { creditBalanceCents: true },
     }),
   ]);
+
+  const hasAccess = membership.active || (dbUser?.creditBalanceCents ?? 0) > 0;
+
+  // Deactivate schedules only if no membership AND no credits
+  if (!hasAccess) {
+    await prisma.recurringSchedule.updateMany({
+      where: { userId: user.id, isActive: true },
+      data: { isActive: false },
+    });
+  }
 
   const normalizedSchedules = schedules.map((schedule) => {
     const decoded = decodeRecurringAiPrompt(schedule.aiPrompt);
@@ -136,8 +139,16 @@ export async function POST(request: NextRequest) {
   }
 
   const membership = await getMembership(user.id);
+
+  // Allow non-members if they have credits (pay-per-use)
   if (!membership.active) {
-    return NextResponse.json({ error: "MEMBERSHIP_REQUIRED" }, { status: 403 });
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { creditBalanceCents: true },
+    });
+    if (!dbUser || dbUser.creditBalanceCents <= 0) {
+      return NextResponse.json({ error: "CREDITS_OR_MEMBERSHIP_REQUIRED" }, { status: 403 });
+    }
   }
 
   const body = await request.json();
@@ -180,9 +191,9 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-  } else if (normalizedPrompt && normalizedPrompt.length > 500) {
+  } else if (normalizedPrompt && normalizedPrompt.length > 1000) {
     return NextResponse.json(
-      { error: "AI prompt exceeds 500 characters" },
+      { error: "AI prompt exceeds 1000 characters" },
       { status: 400 },
     );
   }
@@ -197,6 +208,13 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    // Premium image models require membership
+    if (isPremiumModel(normalizedImageModelId) && !membership.active) {
+      return NextResponse.json(
+        { error: "Premium models require an active membership." },
+        { status: 403 },
+      );
+    }
   }
 
   if (!frequency || !ALL_FREQUENCIES.includes(frequency)) {
@@ -207,27 +225,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Time is required" }, { status: 400 });
   }
 
-  // Check tier requirements for trendRegion and hourly frequencies
-  const needsTierCheck =
-    normalizedTrendRegion || frequency in HOURLY_FREQUENCIES;
-  if (needsTierCheck) {
-    // trendRegion 功能仅限白银及以上会员
-    if (normalizedTrendRegion && !isTierAtLeast(membership.tier, "silver")) {
+  // Check tier requirements for hourly frequencies
+  if (frequency in HOURLY_FREQUENCIES) {
+    const required = HOURLY_FREQUENCIES[frequency].minTier;
+    if (!isTierAtLeast(membership.tier, required)) {
       return NextResponse.json(
-        { error: "TIER_REQUIRED", minTier: "silver" },
+        { error: "TIER_REQUIRED", minTier: required },
         { status: 403 },
       );
-    }
-
-    // Hourly frequency tier check
-    if (frequency in HOURLY_FREQUENCIES) {
-      const required = HOURLY_FREQUENCIES[frequency].minTier;
-      if (!isTierAtLeast(membership.tier, required)) {
-        return NextResponse.json(
-          { error: "TIER_REQUIRED", minTier: required },
-          { status: 403 },
-        );
-      }
     }
   }
 

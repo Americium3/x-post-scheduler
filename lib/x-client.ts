@@ -7,9 +7,15 @@ export interface XCredentials {
   accessTokenSecret: string;
 }
 
+<<<<<<< HEAD
 export function createXClient(credentials: XCredentials) {
   const appKey = credentials.apiKey || process.env.TWITTER_API_KEY;
   const appSecret = credentials.apiSecret || process.env.TWITTER_API_SECRET;
+=======
+function createXClient(credentials: XCredentials) {
+  const appKey = credentials.apiKey || process.env.X_API_KEY || process.env.TWITTER_API_KEY;
+  const appSecret = credentials.apiSecret || process.env.X_API_SECRET || process.env.TWITTER_API_SECRET;
+>>>>>>> main
   if (!appKey || !appSecret) {
     throw new Error("Twitter app credentials are not configured");
   }
@@ -32,6 +38,7 @@ export interface TimelineTweet {
   text: string;
   createdAt: Date | null;
   impressionCount: number | null;
+  mediaUrl: string | null;
 }
 
 export interface TweetMedia {
@@ -58,6 +65,58 @@ export async function getTweetWithMedia(
     if (url) urls.push(url);
   }
   return { mediaUrls: urls };
+}
+
+/**
+ * Batch-fetch media URLs for multiple tweets at once (up to 100 per chunk).
+ * Returns a map of tweetId → first media URL.
+ */
+export async function batchTweetMediaUrls(
+  tweetIds: string[],
+  credentials: XCredentials,
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  if (tweetIds.length === 0) return result;
+
+  const client = createXClient(credentials);
+  const chunks: string[][] = [];
+  for (let i = 0; i < tweetIds.length; i += 100) {
+    chunks.push(tweetIds.slice(i, i + 100));
+  }
+
+  for (const chunk of chunks) {
+    try {
+      const response = await client.v2.tweets(chunk, {
+        expansions: ["attachments.media_keys"],
+        "media.fields": ["url", "preview_image_url", "type"],
+        "tweet.fields": ["attachments"],
+      });
+
+      const mediaItems = response.includes?.media ?? [];
+      const mediaMap = new Map<string, string>();
+      for (const m of mediaItems) {
+        const url =
+          (m as { url?: string; preview_image_url?: string }).url ??
+          (m as { url?: string; preview_image_url?: string }).preview_image_url;
+        if (m.media_key && url) mediaMap.set(m.media_key, url);
+      }
+
+      const tweets = Array.isArray(response.data)
+        ? response.data
+        : response.data
+          ? [response.data]
+          : [];
+      for (const tweet of tweets) {
+        const mediaKeys = tweet.attachments?.media_keys ?? [];
+        const firstUrl = mediaKeys.length > 0 ? mediaMap.get(mediaKeys[0]) : undefined;
+        if (firstUrl) result.set(tweet.id, firstUrl);
+      }
+    } catch {
+      // Silently skip failed chunks
+    }
+  }
+
+  return result;
 }
 
 export async function postTweet(
@@ -97,24 +156,65 @@ export async function getRecentTweets(
   const paginator = await client.v2.userTimeline(me.data.id, {
     max_results: maxResults,
     exclude: ["replies", "retweets"],
-    "tweet.fields": ["created_at", "public_metrics"],
+    "tweet.fields": ["created_at", "public_metrics", "attachments"],
+    expansions: ["attachments.media_keys"],
+    "media.fields": ["url", "preview_image_url", "type"],
   });
 
   const tweets = paginator.tweets ?? [];
+  const mediaItems = paginator.includes?.media ?? [];
+  const mediaMap = new Map<string, string>();
+  for (const m of mediaItems) {
+    const url =
+      (m as { url?: string; preview_image_url?: string }).url ??
+      (m as { url?: string; preview_image_url?: string }).preview_image_url;
+    if (m.media_key && url) mediaMap.set(m.media_key, url);
+  }
+
   const results: TimelineTweet[] = [];
 
   for (const tweet of tweets) {
     if (excludeTweetIds.has(tweet.id)) continue;
+    const mediaKeys = tweet.attachments?.media_keys ?? [];
+    const firstMediaUrl = mediaKeys.length > 0 ? (mediaMap.get(mediaKeys[0]) ?? null) : null;
     results.push({
       id: tweet.id,
       text: tweet.text ?? "",
       createdAt: tweet.created_at ? new Date(tweet.created_at) : null,
       impressionCount: tweet.public_metrics?.impression_count ?? null,
+      mediaUrl: firstMediaUrl,
     });
     if (results.length >= limit) break;
   }
 
   return results;
+}
+
+export async function postReply(
+  content: string,
+  inReplyToTweetId: string,
+  credentials: XCredentials,
+): Promise<PostResult> {
+  try {
+    const client = createXClient(credentials);
+    const rwClient = client.readWrite;
+
+    const result = await rwClient.v2.tweet({
+      text: content,
+      reply: { in_reply_to_tweet_id: inReplyToTweetId },
+    });
+
+    return {
+      success: true,
+      tweetId: result.data.id,
+    };
+  } catch (error) {
+    console.error("Error posting reply:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
 }
 
 export async function postTweetWithMedia(
@@ -344,4 +444,112 @@ export async function verifyUserExists(
       error: error instanceof Error ? error.message : "用户不存在或无法访问",
     };
   }
+}
+export interface TweetLookupResult {
+  id: string;
+  text: string;
+  authorId: string;
+  authorUsername: string;
+  authorName: string;
+  createdAt: Date | null;
+  impressions: number;
+  likes: number;
+  retweets: number;
+  replies: number;
+}
+
+/**
+ * Look up a single tweet by ID with author info and public metrics.
+ */
+export async function lookupTweet(
+  tweetId: string,
+  credentials: XCredentials,
+): Promise<TweetLookupResult | null> {
+  try {
+    const client = createXClient(credentials);
+    const response = await client.v2.singleTweet(tweetId, {
+      expansions: ["author_id"],
+      "tweet.fields": ["created_at", "public_metrics", "author_id"],
+      "user.fields": ["username", "name"],
+    });
+
+    const tweet = response.data;
+    const author = response.includes?.users?.[0];
+    const metrics = tweet.public_metrics;
+
+    return {
+      id: tweet.id,
+      text: tweet.text ?? "",
+      authorId: tweet.author_id ?? "",
+      authorUsername: author?.username ?? "",
+      authorName: author?.name ?? "",
+      createdAt: tweet.created_at ? new Date(tweet.created_at) : null,
+      impressions: metrics?.impression_count ?? 0,
+      likes: metrics?.like_count ?? 0,
+      retweets: metrics?.retweet_count ?? 0,
+      replies: metrics?.reply_count ?? 0,
+    };
+  } catch (error) {
+    console.error(`Error looking up tweet ${tweetId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Batch look up tweets by IDs with author info and public metrics.
+ * Processes in chunks of 100 (X API limit).
+ */
+export async function lookupTweetsByIds(
+  tweetIds: string[],
+  credentials: XCredentials,
+): Promise<TweetLookupResult[]> {
+  if (tweetIds.length === 0) return [];
+
+  const client = createXClient(credentials);
+  const results: TweetLookupResult[] = [];
+
+  const chunks: string[][] = [];
+  for (let i = 0; i < tweetIds.length; i += 100) {
+    chunks.push(tweetIds.slice(i, i + 100));
+  }
+
+  for (const chunk of chunks) {
+    try {
+      const response = await client.v2.tweets(chunk, {
+        expansions: ["author_id"],
+        "tweet.fields": ["created_at", "public_metrics", "author_id"],
+        "user.fields": ["username", "name"],
+      });
+
+      const tweets = Array.isArray(response.data)
+        ? response.data
+        : response.data
+          ? [response.data]
+          : [];
+      const users = response.includes?.users ?? [];
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      for (const tweet of tweets) {
+        const author = tweet.author_id ? userMap.get(tweet.author_id) : undefined;
+        const metrics = tweet.public_metrics;
+
+        results.push({
+          id: tweet.id,
+          text: tweet.text ?? "",
+          authorId: tweet.author_id ?? "",
+          authorUsername: author?.username ?? "",
+          authorName: author?.name ?? "",
+          createdAt: tweet.created_at ? new Date(tweet.created_at) : null,
+          impressions: metrics?.impression_count ?? 0,
+          likes: metrics?.like_count ?? 0,
+          retweets: metrics?.retweet_count ?? 0,
+          replies: metrics?.reply_count ?? 0,
+        });
+      }
+    } catch {
+      // Silently skip failed chunks (rate limit, permissions, etc.)
+    }
+  }
+
+  return results;
 }

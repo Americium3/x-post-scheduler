@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import { postTweet, postTweetWithMedia } from "./x-client";
+import { postTweet, postTweetWithMedia, getTweetWithMedia } from "./x-client";
 import { getUserXCredentials } from "./user-credentials";
 import { generateTweet } from "./openai";
 import { trackTokenUsage, trackWavespeedUsage } from "./usage-tracking";
@@ -14,7 +14,9 @@ import { addDays, addWeeks, addMonths, addHours } from "date-fns";
 import { HOURLY_FREQUENCIES, isVerifiedMember } from "./subscription";
 import { decodeRecurringAiPrompt } from "./recurring-ai";
 import { submitImageTask, getVideoTask } from "./wavespeed";
-import { buildTrendPrompt } from "./trending";
+import { buildTrendPrompt, fetchTrendingTopics, trendRegionWoeid } from "./trending";
+import { getContentProfile } from "./content-profile";
+import { optimizeHashtags } from "./hashtag-optimizer";
 
 async function fetchBinary(
   url: string,
@@ -98,6 +100,19 @@ export async function processScheduledPosts() {
       result = await postTweet(post.content, resolved.credentials);
     }
 
+    // Fetch Twitter CDN media URLs after posting with media
+    let twitterMediaUrls: string | null = null;
+    if (result.success && result.tweetId && post.mediaAssetId) {
+      try {
+        const tweetMedia = await getTweetWithMedia(result.tweetId, resolved.credentials);
+        if (tweetMedia.mediaUrls.length > 0) {
+          twitterMediaUrls = JSON.stringify(tweetMedia.mediaUrls);
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+
     await prisma.post.update({
       where: { id: post.id },
       data: {
@@ -105,6 +120,7 @@ export async function processScheduledPosts() {
         postedAt: result.success ? new Date() : null,
         tweetId: result.tweetId || null,
         error: result.error || null,
+        ...(twitterMediaUrls ? { mediaUrls: twitterMediaUrls } : {}),
       },
     });
 
@@ -146,13 +162,17 @@ export async function processRecurringSchedules() {
       membershipCache.set(schedule.userId!, membershipActive);
     }
 
+    // Allow non-members if they have credits (pay-per-use)
     if (!membershipActive) {
-      await prisma.recurringSchedule.update({
-        where: { id: schedule.id },
-        data: { isActive: false },
-      });
-      console.log(`Schedule ${schedule.id} paused: membership inactive`);
-      continue;
+      const userHasCredits = await hasCredits(schedule.userId!);
+      if (!userHasCredits) {
+        await prisma.recurringSchedule.update({
+          where: { id: schedule.id },
+          data: { isActive: false },
+        });
+        console.log(`Schedule ${schedule.id} paused: no membership or credits`);
+        continue;
+      }
     }
 
     const resolved = await getUserXCredentials(
@@ -174,7 +194,7 @@ export async function processRecurringSchedules() {
       if (!userHasCredits) {
         generationError = "Insufficient credits for AI generation";
       } else {
-        const [sources, recentPostsRows] = await Promise.all([
+        const [sources, recentPostsRows, profileData] = await Promise.all([
           prisma.knowledgeSource.findMany({
             where: { isActive: true, userId: schedule.userId },
           }),
@@ -184,8 +204,10 @@ export async function processRecurringSchedules() {
             take: 5,
             select: { content: true },
           }),
+          getContentProfile(schedule.userId!),
         ]);
         const recentPosts = recentPostsRows.map((p) => p.content);
+        const contentProfile = profileData.profile ?? undefined;
 
         if (sources.length === 0) {
           generationError =
@@ -223,6 +245,7 @@ export async function processRecurringSchedules() {
             effectivePrompt,
             schedule.aiLanguage || undefined,
             recentPosts,
+            contentProfile,
           );
 
           if (generated.usage) {
@@ -253,6 +276,31 @@ export async function processRecurringSchedules() {
               generated.error || "Failed to generate AI content";
           } else {
             contentToPost = generated.content;
+
+            // Hashtag optimization: append relevant trending hashtags
+            if (schedule.trendRegion) {
+              try {
+                const woeid = trendRegionWoeid[schedule.trendRegion!] ?? 1;
+                const trendResult = await fetchTrendingTopics(
+                  schedule.userId!,
+                  woeid,
+                );
+                if (trendResult.success && trendResult.trends?.length) {
+                  const trendNames = trendResult.trends
+                    .slice(0, 10)
+                    .map((t) => t.name);
+                  const hashtagResult = await optimizeHashtags(
+                    contentToPost,
+                    trendNames,
+                  );
+                  if (hashtagResult.success) {
+                    contentToPost = hashtagResult.content;
+                  }
+                }
+              } catch (hashtagErr) {
+                console.warn("Hashtag optimization failed:", hashtagErr);
+              }
+            }
           }
         }
       }
@@ -336,6 +384,19 @@ export async function processRecurringSchedules() {
       result = await postTweet(contentToPost, resolved.credentials);
     }
 
+    // Fetch Twitter CDN media URLs for posts with images
+    let twitterMediaUrls: string | null = null;
+    if (result.success && result.tweetId && imageModelId) {
+      try {
+        const tweetMedia = await getTweetWithMedia(result.tweetId, resolved.credentials);
+        if (tweetMedia.mediaUrls.length > 0) {
+          twitterMediaUrls = JSON.stringify(tweetMedia.mediaUrls);
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+
     await prisma.post.create({
       data: {
         content: contentToPost,
@@ -343,6 +404,7 @@ export async function processRecurringSchedules() {
         postedAt: result.success ? new Date() : null,
         tweetId: result.tweetId || null,
         error: result.error || null,
+        mediaUrls: twitterMediaUrls,
         xAccountId: resolved.accountId,
         userId: schedule.userId,
       },
