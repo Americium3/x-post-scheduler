@@ -45,6 +45,13 @@ export const metadata: Metadata = {
     icon: "/logo.svg",
     apple: "/logo.svg",
   },
+  manifest: "/manifest.json",
+  other: {
+    "theme-color": "#2563eb",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "xPilot",
+  },
   robots: { index: true, follow: true },
 };
 

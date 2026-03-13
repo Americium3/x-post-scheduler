@@ -283,6 +283,13 @@ export default function LandingContent({
       })
       .then((data) => setStats(data))
       .finally(() => setStatsLoading(false));
+
+    // Capture referral code from URL
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("xpilot_referral_code", ref);
+    }
   }, []);
 
   async function handleCopyLink() {
@@ -448,22 +455,22 @@ export default function LandingContent({
         )}
       </header>
 
-      {/* Seedance 2.0 Announcement */}
-      <div className="bg-linear-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b border-purple-200 dark:border-purple-800">
+      {/* Numix Partnership Announcement */}
+      <div className="bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-b border-purple-200 dark:border-purple-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-center">
           <p className="text-sm sm:text-base text-gray-900 dark:text-white">
             <span className="font-semibold">
-              🚀 Seedance 2.0 Live
+              🤝 {lang === "zh" ? "新合作" : "New Partnership"}
             </span>
             {" · "}
             {lang === "zh"
-              ? "Seedance 2.0 视频生成模型现已上线！支持更高质量的 AI 视频创作。"
-              : "Seedance 2.0 video generation model is now live! Create higher quality AI videos."}{" "}
+              ? "xPilot 与税务科技公司 Numix 达成战略合作！AI 营销 + 智能财税，助力创业者一站式增长。"
+              : "xPilot partners with Numix! AI marketing + smart tax solutions for entrepreneurs."}{" "}
             <Link
-              href={`${prefix}/toolbox`}
+              href={`${prefix}/changelog`}
               className="text-purple-600 dark:text-purple-400 hover:underline font-medium"
             >
-              {lang === "zh" ? "立即体验 →" : "Try it now →"}
+              {lang === "zh" ? "了解详情 →" : "Learn more →"}
             </Link>
           </p>
         </div>

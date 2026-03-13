@@ -14,6 +14,7 @@ import {
 } from "@/lib/subscription";
 import type { TierKey } from "@/lib/subscription";
 import TeamSection from "@/components/TeamSection";
+import ReferralSection from "@/components/ReferralSection";
 
 interface XAccount {
   id: string;
@@ -2454,6 +2455,11 @@ export default function SettingsPage() {
           )}
         </div>
         {/* end Credits+AI Usage grid */}
+
+        {/* Referral program */}
+        <div className="mt-6">
+          <ReferralSection locale={pathname.startsWith("/zh") ? "zh" : "en"} />
+        </div>
 
         {/* Teams section */}
         <div className="mt-6">

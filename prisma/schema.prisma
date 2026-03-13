@@ -74,6 +74,12 @@ model User {
   apiKeys                ApiKey[]
   stitchJobs             StitchJob[]
   teamMemberships        TeamMember[]
+  // Affiliate / Referral
+  referralCode           String?   @unique
+  referredByUserId       String?
+  referredByUser         User?     @relation("Referrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referrals              User[]    @relation("Referrals")
+  referralCommissions    ReferralCommission[]
 }
 
 model CronRunEvent {
@@ -696,6 +702,26 @@ model StitchJob {
 
   @@index([userId, status])
   @@index([createdAt])
+}
+
+// ── Affiliate / Referral ─────────────────────────────────────────────────────
+
+model ReferralCommission {
+  id                String   @id @default(cuid())
+  referrerId        String
+  referredUserId    String
+  sourceType        String   // "topup" | "subscription"
+  sourceAmountCents Int
+  commissionCents   Int      // 5% of sourceAmountCents
+  stripeSessionId   String?
+  status            String   @default("earned") // "earned" | "paid_out"
+  createdAt         DateTime @default(now())
+
+  referrer User @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId, createdAt])
+  @@index([referredUserId, createdAt])
+  @@index([stripeSessionId])
 }
 
 // ── Team System ──────────────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import {
 } from "@/lib/stripe";
 import { addCredits } from "@/lib/credits";
 import { prisma } from "@/lib/db";
+import { recordCommission } from "@/lib/referral";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -63,6 +64,13 @@ export async function POST(request: NextRequest) {
               stripeSessionId: session.id,
             });
             console.log(`Credits added: ${amountCents}¢ for user ${userId}`);
+            // Affiliate commission
+            await recordCommission({
+              referredUserId: userId,
+              paymentAmountCents: amountCents,
+              sourceType: "topup",
+              stripeSessionId: session.id,
+            });
           }
         }
       } else if (session.mode === "subscription" && session.amount_total) {
@@ -78,6 +86,13 @@ export async function POST(request: NextRequest) {
           console.log(
             `Initial subscription credits added: ${session.amount_total}¢ for user ${userId}`,
           );
+          // Affiliate commission
+          await recordCommission({
+            referredUserId: userId,
+            paymentAmountCents: session.amount_total,
+            sourceType: "subscription",
+            stripeSessionId: session.id,
+          });
         }
       }
       break;
@@ -197,6 +212,13 @@ export async function POST(request: NextRequest) {
           console.log(
             `Renewal credits added: ${invoice.amount_paid}¢ for user ${user.id}`,
           );
+          // Affiliate commission
+          await recordCommission({
+            referredUserId: user.id,
+            paymentAmountCents: invoice.amount_paid,
+            sourceType: "subscription",
+            stripeSessionId: invoice.id,
+          });
         }
       }
       break;

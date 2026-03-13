@@ -16,8 +16,8 @@ const mono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Invest in Us | X Post Scheduler",
-  description: "Investor page for X Post Scheduler.",
+  title: "Invest in Us",
+  description: "Investor page for xPilot.",
 };
 
 export const dynamic = "force-dynamic";

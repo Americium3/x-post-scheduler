@@ -37,6 +37,93 @@ export default async function ChangelogPage({
 
         {/* Timeline */}
         <div className="space-y-8">
+          {/* 2026-03 Partnership with Numix */}
+          <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                  {isZh ? "合作伙伴" : "Partnership"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年3月" : "March 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "xPilot 与 Numix 达成战略合作"
+                  : "xPilot Partners with Numix"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      我们很高兴地宣布，xPilot 已与税务科技公司{" "}
+                      <a
+                        href="https://www.numix.co/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                      >
+                        Numix
+                      </a>{" "}
+                      达成战略合作！Numix 专注于为企业提供自动化税务优惠、全栈会计和 CFO 服务。
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      合作亮点
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li>
+                        <strong>AI + 财税</strong> — 结合 xPilot 的 AI 营销能力与 Numix 的智能财税方案，为创业者和中小企业提供一站式增长支持
+                      </li>
+                      <li>
+                        <strong>内容驱动获客</strong> — xPilot 帮助 Numix 用户通过 AI 生成的社媒内容提升品牌曝光
+                      </li>
+                      <li>
+                        <strong>税务优惠自动化</strong> — Numix 帮助 xPilot 用户发现和申请税务优惠，降低运营成本
+                      </li>
+                    </ul>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      这次合作标志着 xPilot 在构建创业者生态系统方面迈出的重要一步。期待与 Numix 一起，为更多企业赋能！
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      We're excited to announce that xPilot has partnered with{" "}
+                      <a
+                        href="https://www.numix.co/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                      >
+                        Numix
+                      </a>
+                      , a tax technology company specializing in automated tax credits, full-stack accounting, and CFO services for businesses.
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      Partnership Highlights
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li>
+                        <strong>AI + FinTech</strong> — Combining xPilot's AI marketing capabilities with Numix's intelligent tax solutions to provide all-in-one growth support for entrepreneurs and SMBs
+                      </li>
+                      <li>
+                        <strong>Content-Driven Growth</strong> — xPilot helps Numix users boost brand visibility through AI-generated social media content
+                      </li>
+                      <li>
+                        <strong>Automated Tax Credits</strong> — Numix helps xPilot users discover and claim tax credits to reduce operating costs
+                      </li>
+                    </ul>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      This partnership marks an important step in building an ecosystem for entrepreneurs. We look forward to empowering more businesses together with Numix!
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* 2026-03 Scheduling change */}
           <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
             <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
