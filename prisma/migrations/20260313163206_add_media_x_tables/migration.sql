@@ -1,10 +1,18 @@
 /*
   Warnings:
 
+  - A unique constraint covering the columns `[stripeCustomerId]` on the table `User` will be added. If there are existing duplicate values, this will fail.
+  - A unique constraint covering the columns `[stripeSubscriptionId]` on the table `User` will be added. If there are existing duplicate values, this will fail.
   - A unique constraint covering the columns `[stripeConnectAccountId]` on the table `User` will be added. If there are existing duplicate values, this will fail.
   - A unique constraint covering the columns `[achConnectAccountId]` on the table `User` will be added. If there are existing duplicate values, this will fail.
 
 */
+-- DropIndex
+DROP INDEX "GalleryComment_userId_idx";
+
+-- DropIndex
+DROP INDEX "GalleryLike_userId_idx";
+
 -- AlterTable
 ALTER TABLE "KnowledgeImage" ADD COLUMN     "duration" INTEGER,
 ADD COLUMN     "mediaType" TEXT NOT NULL DEFAULT 'image',
@@ -17,11 +25,15 @@ ADD COLUMN     "type" TEXT NOT NULL DEFAULT 'website';
 -- AlterTable
 ALTER TABLE "Post" ADD COLUMN     "abGroup" TEXT,
 ADD COLUMN     "abScore" DOUBLE PRECISION,
+ADD COLUMN     "impressions" INTEGER,
 ADD COLUMN     "likes" INTEGER,
 ADD COLUMN     "replies" INTEGER,
 ADD COLUMN     "retweets" INTEGER,
 ADD COLUMN     "threadId" TEXT,
 ADD COLUMN     "threadOrder" INTEGER;
+
+-- AlterTable
+ALTER TABLE "RecurringSchedule" ADD COLUMN     "trendRegion" TEXT;
 
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN     "achBankLast4" TEXT,
@@ -30,10 +42,107 @@ ADD COLUMN     "achConnectAccountId" TEXT,
 ADD COLUMN     "achConnectStatus" TEXT,
 ADD COLUMN     "contentProfile" TEXT,
 ADD COLUMN     "contentProfileUpdatedAt" TIMESTAMP(3),
+ADD COLUMN     "language" TEXT NOT NULL DEFAULT 'en',
+ADD COLUMN     "lastLoginDate" TIMESTAMP(3),
+ADD COLUMN     "lastLoginRewardAt" TIMESTAMP(3),
+ADD COLUMN     "loginStreak" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "longestStreak" INTEGER NOT NULL DEFAULT 0,
 ADD COLUMN     "seedanceApiKey" TEXT,
 ADD COLUMN     "stripeConnectAccountId" TEXT,
 ADD COLUMN     "stripeConnectStatus" TEXT,
+ADD COLUMN     "stripeCustomerId" TEXT,
+ADD COLUMN     "stripeSubscriptionId" TEXT,
+ADD COLUMN     "subscriptionPeriodEnd" TIMESTAMP(3),
+ADD COLUMN     "subscriptionStatus" TEXT,
+ADD COLUMN     "subscriptionTier" TEXT,
 ADD COLUMN     "weixinCookie" TEXT;
+
+-- AlterTable
+ALTER TABLE "XAccount" ALTER COLUMN "xApiKey" DROP NOT NULL,
+ALTER COLUMN "xApiSecret" DROP NOT NULL;
+
+-- CreateTable
+CREATE TABLE "UserFollow" (
+    "id" TEXT NOT NULL,
+    "followerId" TEXT NOT NULL,
+    "followingId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UserFollow_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "VideoJob" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "modelId" TEXT NOT NULL,
+    "modelLabel" TEXT NOT NULL,
+    "videoMode" TEXT NOT NULL,
+    "prompt" TEXT NOT NULL,
+    "segmentCount" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL DEFAULT 5,
+    "aspectRatio" TEXT NOT NULL DEFAULT '16:9',
+    "generateAudio" BOOLEAN NOT NULL DEFAULT false,
+    "i2vImageUrl" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "segments" TEXT NOT NULL DEFAULT '[]',
+    "completedUrls" TEXT,
+    "stitchedUrl" TEXT,
+    "error" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "startedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+
+    CONSTRAINT "VideoJob_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "MediaMonitorXAccounts" (
+    "id" TEXT NOT NULL,
+    "xAccountId" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "MediaMonitorXAccounts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "MediaXTweetSource" (
+    "id" TEXT NOT NULL,
+    "reportDate" TEXT NOT NULL,
+    "period" TEXT NOT NULL,
+    "xAccountId" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
+    "fullContent" TEXT NOT NULL,
+    "fullContentZh" TEXT,
+    "imageUrl" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "MediaXTweetSource_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "MediaXTweetReport" (
+    "id" TEXT NOT NULL,
+    "period" TEXT NOT NULL,
+    "reportDate" TIMESTAMP(3) NOT NULL,
+    "rangeStart" TIMESTAMP(3) NOT NULL,
+    "rangeEnd" TIMESTAMP(3) NOT NULL,
+    "titleEn" TEXT NOT NULL,
+    "titleZh" TEXT NOT NULL,
+    "summaryEn" TEXT NOT NULL,
+    "summaryZh" TEXT NOT NULL,
+    "highlightsEn" TEXT NOT NULL,
+    "highlightsZh" TEXT NOT NULL,
+    "coverImageUrl" TEXT,
+    "sourceCount" INTEGER NOT NULL DEFAULT 0,
+    "usedAi" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "MediaXTweetReport_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "Campaign" (
@@ -312,6 +421,45 @@ CREATE TABLE "TeamCreditTransaction" (
 );
 
 -- CreateIndex
+CREATE INDEX "UserFollow_followerId_idx" ON "UserFollow"("followerId");
+
+-- CreateIndex
+CREATE INDEX "UserFollow_followingId_idx" ON "UserFollow"("followingId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserFollow_followerId_followingId_key" ON "UserFollow"("followerId", "followingId");
+
+-- CreateIndex
+CREATE INDEX "VideoJob_userId_status_idx" ON "VideoJob"("userId", "status");
+
+-- CreateIndex
+CREATE INDEX "VideoJob_createdAt_idx" ON "VideoJob"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "MediaMonitorXAccounts_xAccountId_idx" ON "MediaMonitorXAccounts"("xAccountId");
+
+-- CreateIndex
+CREATE INDEX "MediaMonitorXAccounts_username_idx" ON "MediaMonitorXAccounts"("username");
+
+-- CreateIndex
+CREATE INDEX "MediaXTweetSource_reportDate_period_idx" ON "MediaXTweetSource"("reportDate", "period");
+
+-- CreateIndex
+CREATE INDEX "MediaXTweetSource_xAccountId_idx" ON "MediaXTweetSource"("xAccountId");
+
+-- CreateIndex
+CREATE INDEX "MediaXTweetSource_username_createdAt_idx" ON "MediaXTweetSource"("username", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MediaXTweetSource_reportDate_period_xAccountId_key" ON "MediaXTweetSource"("reportDate", "period", "xAccountId");
+
+-- CreateIndex
+CREATE INDEX "MediaXTweetReport_period_reportDate_idx" ON "MediaXTweetReport"("period", "reportDate");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MediaXTweetReport_period_reportDate_key" ON "MediaXTweetReport"("period", "reportDate");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Campaign_shareToken_key" ON "Campaign"("shareToken");
 
 -- CreateIndex
@@ -459,10 +607,25 @@ CREATE INDEX "RecurringSchedule_isActive_nextRunAt_idx" ON "RecurringSchedule"("
 CREATE INDEX "RecurringSchedule_userId_isActive_idx" ON "RecurringSchedule"("userId", "isActive");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_stripeCustomerId_key" ON "User"("stripeCustomerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_stripeSubscriptionId_key" ON "User"("stripeSubscriptionId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_stripeConnectAccountId_key" ON "User"("stripeConnectAccountId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_achConnectAccountId_key" ON "User"("achConnectAccountId");
+
+-- AddForeignKey
+ALTER TABLE "UserFollow" ADD CONSTRAINT "UserFollow_followerId_fkey" FOREIGN KEY ("followerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserFollow" ADD CONSTRAINT "UserFollow_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "VideoJob" ADD CONSTRAINT "VideoJob_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Campaign" ADD CONSTRAINT "Campaign_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

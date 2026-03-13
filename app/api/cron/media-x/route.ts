@@ -47,10 +47,10 @@ async function handleRequest(request: NextRequest) {
       : forceWeekly || isSundayUtc(new Date());
 
   // Get userId from environment email
-  const systemUserEmail = process.env.SYSTEM_USER_EMAIL;
+  const systemUserEmail = process.env.MEDIA_X_USER_EMAIL;
   if (!systemUserEmail) {
     return NextResponse.json(
-      { error: "SYSTEM_USER_EMAIL not configured" },
+      { error: "MEDIA_X_USER_EMAIL not configured" },
       { status: 500 },
     );
   }
