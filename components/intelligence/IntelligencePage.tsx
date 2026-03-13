@@ -7,17 +7,55 @@ import NewsContent from "./NewsContent";
 import type { NewsContentProps } from "./NewsContent";
 
 const MonitoringContent = lazy(() => import("./MonitoringContent"));
+const MediaXContent = lazy(() => import("./MediaXContent"));
 
-type Tab = "news" | "monitoring";
+type Tab = "news" | "mediax" | "monitoring";
+
+interface MediaXData {
+  latest: {
+    date: string;
+    period: string;
+    titleEn: string;
+    titleZh: string;
+    summaryEn: string;
+    summaryZh: string;
+    highlightsEn: string[];
+    highlightsZh: string[];
+    coverImageUrl: string | null;
+    sourceCount: number;
+    usedAi: boolean;
+  } | null;
+  latestWeekly: {
+    date: string;
+    period: string;
+    titleEn: string;
+    titleZh: string;
+    summaryEn: string;
+    summaryZh: string;
+    highlightsEn: string[];
+    highlightsZh: string[];
+    coverImageUrl: string | null;
+    sourceCount: number;
+    usedAi: boolean;
+  } | null;
+  dailyArchive: Array<{
+    date: string;
+    titleEn: string;
+    titleZh: string;
+    sourceCount: number;
+  }>;
+}
 
 interface IntelligencePageProps {
   locale: string;
   newsData: Omit<NewsContentProps, "locale">;
+  mediaXData: MediaXData;
 }
 
 export default function IntelligencePage({
   locale,
   newsData,
+  mediaXData,
 }: IntelligencePageProps) {
   const t = useTranslations("intelligence");
   const isZh = locale === "zh";
@@ -28,13 +66,19 @@ export default function IntelligencePage({
   // Read tab from URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("tab") === "monitoring") setTab("monitoring");
+    const tabParam = params.get("tab");
+    if (tabParam === "monitoring") setTab("monitoring");
+    else if (tabParam === "mediax") setTab("mediax");
   }, []);
 
   // Sync tab to URL
   useEffect(() => {
     const path =
-      tab === "monitoring" ? `${prefix}/news?tab=monitoring` : `${prefix}/news`;
+      tab === "monitoring"
+        ? `${prefix}/news?tab=monitoring`
+        : tab === "mediax"
+          ? `${prefix}/news?tab=mediax`
+          : `${prefix}/news`;
     window.history.replaceState(null, "", path);
   }, [tab, prefix]);
 
@@ -89,6 +133,18 @@ export default function IntelligencePage({
             >
               {t("tabNews")}
             </button>
+
+            <button
+              onClick={() => setTab("mediax")}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                tab === "mediax"
+                  ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              }`}
+            >
+              {t("tabMediaX")}
+            </button>
+
             <button
               onClick={() => setTab("monitoring")}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
@@ -109,6 +165,20 @@ export default function IntelligencePage({
       {/* Tab content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {tab === "news" && <NewsContent locale={locale} {...newsData} />}
+        {tab === "mediax" && (
+          <Suspense
+            fallback={
+              <div className="text-center py-12 text-gray-500">Loading...</div>
+            }
+          >
+            <MediaXContent
+              locale={locale}
+              latest={mediaXData.latest}
+              latestWeekly={mediaXData.latestWeekly}
+              dailyArchive={mediaXData.dailyArchive}
+            />
+          </Suspense>
+        )}
         {tab === "monitoring" && (
           <Suspense
             fallback={

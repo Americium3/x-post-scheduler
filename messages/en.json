@@ -829,6 +829,7 @@
     "title": "Intelligence",
     "subtitle": "Media insights & social sentiment tracking",
     "tabNews": "Media Daily",
+    "tabMediaX": "X Daily",
     "tabMonitoring": "Sentiment Monitor",
     "backToDashboard": "← Dashboard"
   }

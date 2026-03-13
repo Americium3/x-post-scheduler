@@ -59,7 +59,7 @@ const worker = {
 
     ctx.waitUntil(
       (async () => {
-        // Every slot (2x/day at 01:00, 13:00 UTC): process scheduled posts
+        // Every slot (3x/day at 01:00, 13:00, 23:00 UTC): process scheduled posts
         await safeTrigger(env, "Scheduler", "/api/scheduler");
 
         // Slot 1 (UTC 01:00): Full daily pipeline
@@ -93,6 +93,19 @@ const worker = {
             } else {
               console.log("AutoClaw cron triggered successfully");
             }
+          }
+        }
+
+        // Slot 2 (UTC 13:00): Only scheduler runs (no additional tasks)
+
+        // Slot 3 (UTC 23:00): Media-X reports
+        if (hour === 23) {
+          // Daily Media-X report
+          await safeTrigger(env, "Media-X-daily", "/api/cron/media-x?period=daily");
+
+          // Weekly Media-X report on Sundays
+          if (new Date().getUTCDay() === 0) {
+            await safeTrigger(env, "Media-X-weekly", "/api/cron/media-x?period=weekly");
           }
         }
 
