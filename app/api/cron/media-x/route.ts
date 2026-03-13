@@ -4,6 +4,7 @@ import {
   syncMonitoredAccounts,
   type ReportPeriod,
 } from "@/lib/media-x";
+import { prisma } from "@/lib/db";
 
 type TriggerPeriod = ReportPeriod | "both";
 
@@ -45,14 +46,29 @@ async function handleRequest(request: NextRequest) {
       ? true
       : forceWeekly || isSundayUtc(new Date());
 
-  // Get userId from environment or use a system user
-  const systemUserId = process.env.SYSTEM_USER_ID;
-  if (!systemUserId) {
+  // Get userId from environment email
+  const systemUserEmail = process.env.SYSTEM_USER_EMAIL;
+  if (!systemUserEmail) {
     return NextResponse.json(
-      { error: "SYSTEM_USER_ID not configured" },
+      { error: "SYSTEM_USER_EMAIL not configured" },
       { status: 500 },
     );
   }
+
+  // Look up user by email
+  const systemUser = await prisma.user.findFirst({
+    where: { email: systemUserEmail },
+    select: { id: true },
+  });
+
+  if (!systemUser) {
+    return NextResponse.json(
+      { error: "System user not found with provided email" },
+      { status: 500 },
+    );
+  }
+
+  const systemUserId = systemUser.id;
 
   try {
     const results: Record<string, unknown> = {};

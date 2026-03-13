@@ -789,3 +789,185 @@ export async function syncMonitoredAccounts(
     };
   }
 }
+
+/**
+ * Get X tweet report by date
+ */
+export async function getXReportByDate(
+  date: string,
+  period: ReportPeriod = "daily",
+): Promise<{
+  date: string;
+  period: string;
+  titleEn: string;
+  titleZh: string;
+  summaryEn: string;
+  summaryZh: string;
+  highlightsEn: string[];
+  highlightsZh: string[];
+  coverImageUrl: string | null;
+  sourceCount: number;
+  usedAi: boolean;
+} | null> {
+  try {
+    const reportDate = new Date(`${date}T00:00:00.000Z`);
+    const report = await prisma.mediaXTweetReport.findFirst({
+      where: {
+        period,
+        reportDate,
+      },
+    });
+
+    if (!report) return null;
+
+    return {
+      date: report.reportDate.toISOString().slice(0, 10),
+      period: report.period,
+      titleEn: report.titleEn,
+      titleZh: report.titleZh,
+      summaryEn: report.summaryEn,
+      summaryZh: report.summaryZh,
+      highlightsEn: JSON.parse(report.highlightsEn) as string[],
+      highlightsZh: JSON.parse(report.highlightsZh) as string[],
+      coverImageUrl: report.coverImageUrl,
+      sourceCount: report.sourceCount,
+      usedAi: report.usedAi,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get X source tweets by date
+ */
+export async function getXSourceTweets(
+  date: string,
+  period: ReportPeriod = "daily",
+): Promise<Array<{
+  id: string;
+  username: string;
+  fullContent: string;
+  fullContentZh: string | null;
+  imageUrl: string | null;
+}>> {
+  try {
+    const sources = await prisma.mediaXTweetSource.findMany({
+      where: {
+        reportDate: date,
+        period,
+      },
+      orderBy: {
+        username: "asc",
+      },
+    });
+
+    return sources.map((s) => ({
+      id: s.id,
+      username: s.username,
+      fullContent: s.fullContent,
+      fullContentZh: s.fullContentZh,
+      imageUrl: s.imageUrl,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * List stored X tweet reports
+ */
+export async function listStoredXReports(
+  period: ReportPeriod,
+  limit: number = 30,
+): Promise<Array<{
+  date: string;
+}>> {
+  try {
+    const reports = await prisma.mediaXTweetReport.findMany({
+      where: { period },
+      orderBy: { reportDate: "desc" },
+      take: limit,
+    });
+
+    return reports.map((r) => ({
+      date: r.reportDate.toISOString().slice(0, 10),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get latest X tweet report (internal helper)
+ */
+async function getLatestXTweetReport(period: ReportPeriod) {
+  const report = await prisma.mediaXTweetReport.findFirst({
+    where: { period },
+    orderBy: { reportDate: "desc" },
+  });
+
+  if (!report) return null;
+
+  return {
+    date: report.reportDate.toISOString().slice(0, 10),
+    period: report.period,
+    titleEn: report.titleEn,
+    titleZh: report.titleZh,
+    summaryEn: report.summaryEn,
+    summaryZh: report.summaryZh,
+    highlightsEn: JSON.parse(report.highlightsEn) as string[],
+    highlightsZh: JSON.parse(report.highlightsZh) as string[],
+    coverImageUrl: report.coverImageUrl,
+    sourceCount: report.sourceCount,
+    usedAi: report.usedAi,
+  };
+}
+
+/**
+ * List X tweet reports with title info (internal helper)
+ */
+async function listXTweetReports(period: ReportPeriod, limit: number) {
+  const reports = await prisma.mediaXTweetReport.findMany({
+    where: { period },
+    orderBy: { reportDate: "desc" },
+    take: limit,
+  });
+
+  return reports.map((r) => ({
+    date: r.reportDate.toISOString().slice(0, 10),
+    titleEn: r.titleEn,
+    titleZh: r.titleZh,
+    sourceCount: r.sourceCount,
+  }));
+}
+
+/**
+ * Get all media-x data for the intelligence page
+ */
+export async function getMediaXIntelligenceData() {
+  try {
+    const [latest, latestWeekly, dailyArchiveRaw] = await Promise.all([
+      getLatestXTweetReport("daily"),
+      getLatestXTweetReport("weekly"),
+      listXTweetReports("daily", 14),
+    ]);
+
+    const dailyArchive = dailyArchiveRaw.filter(
+      (item) => item.date !== latest?.date,
+    );
+
+    return {
+      latest,
+      latestWeekly,
+      dailyArchive,
+    };
+  } catch (error) {
+    console.error("Error fetching media-x reports:", error);
+    return {
+      latest: null,
+      latestWeekly: null,
+      dailyArchive: [],
+    };
+  }
+}

@@ -7,7 +7,7 @@ export interface XCredentials {
   accessTokenSecret: string;
 }
 
-function createXClient(credentials: XCredentials) {
+export function createXClient(credentials: XCredentials) {
   const appKey = credentials.apiKey || process.env.X_API_KEY || process.env.TWITTER_API_KEY;
   const appSecret = credentials.apiSecret || process.env.X_API_SECRET || process.env.TWITTER_API_SECRET;
   if (!appKey || !appSecret) {

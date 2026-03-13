@@ -4,6 +4,7 @@ import {
   getLatestStoredMediaIndustryReport,
   listStoredMediaIndustryReports,
 } from "@/lib/media-news";
+import { getMediaXIntelligenceData } from "@/lib/media-x";
 import IntelligencePage from "@/components/intelligence/IntelligencePage";
 
 export const metadata: Metadata = {
@@ -21,10 +22,11 @@ export default async function MediaNewsPage({
 }) {
   const { locale } = await params;
 
-  const [latest, latestWeekly, dailyArchiveRaw] = await Promise.all([
+  const [latest, latestWeekly, dailyArchiveRaw, mediaXData] = await Promise.all([
     fetchDailyMediaTechNews(),
     getLatestStoredMediaIndustryReport("weekly"),
     listStoredMediaIndustryReports("daily", 14),
+    getMediaXIntelligenceData(),
   ]);
 
   const dailyArchive = dailyArchiveRaw.filter(
@@ -35,6 +37,7 @@ export default async function MediaNewsPage({
     <IntelligencePage
       locale={locale || "en"}
       newsData={{ latest, latestWeekly, dailyArchive }}
+      mediaXData={mediaXData}
     />
   );
 }

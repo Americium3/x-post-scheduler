@@ -429,7 +429,7 @@ export default function AdminMediaXTrigger() {
           补跑历史报告
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          用最新代码重新生成历史报告，覆盖数据库中的旧记录。每天约需 10–20 秒。
+          用最新代码重新生成历史报告，覆盖数据库中的旧记录。
         </p>
 
         <div className="flex flex-wrap gap-3 mb-4">
