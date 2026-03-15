@@ -7,6 +7,7 @@ import { getWavespeedFeeCents } from "@/lib/credits";
 import AdminCreditTopup from "@/components/AdminCreditTopup";
 import AdminMembershipManager from "@/components/AdminMembershipManager";
 import AdminMediaNewsTrigger from "@/components/AdminMediaNewsTrigger";
+import AdminMediaXTrigger from "@/components/AdminMediaXTrigger";
 import AdminUserGrowthChart from "@/components/AdminUserGrowthChart";
 import { getTranslations } from "next-intl/server";
 
@@ -989,6 +990,7 @@ export default async function AdminPage() {
         </section>
 
         <AdminMediaNewsTrigger />
+        <AdminMediaXTrigger />
         <AdminMembershipManager />
         <AdminCreditTopup />
       </main>
