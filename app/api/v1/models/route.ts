@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiAuth, apiError } from "@/lib/api-auth";
+import { requireApiAuth } from "@/lib/api-auth";
 import { VIDEO_MODELS, I2V_MODELS, IMAGE_MODELS } from "@/lib/wavespeed";
 import { SEEDANCE_VIDEO_MODELS, SEEDANCE_I2V_MODELS } from "@/lib/seedance";
 import { TEXT_MODELS } from "@/lib/ai-models";
@@ -9,7 +9,6 @@ import { getWavespeedFeeCents } from "@/lib/credits";
 export async function GET(request: NextRequest) {
   const auth = await requireApiAuth(request.headers.get("authorization"));
   if (auth instanceof NextResponse) return auth;
-
   const text = TEXT_MODELS.map((m) => ({
     id: m.id,
     label: m.label,
