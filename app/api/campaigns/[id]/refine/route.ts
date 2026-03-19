@@ -41,7 +41,8 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { instruction, currentContent, locale: userLocale, modelId } = body;
+    const { instruction, currentContent, modelId } = body;
+    const userLocale = (body.locale as string | undefined) || user.language;
 
     if (!instruction?.trim()) {
       return NextResponse.json({ error: "Instruction is required" }, { status: 400 });

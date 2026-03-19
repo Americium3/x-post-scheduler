@@ -48,16 +48,21 @@ async def run_editor(
                 refined_text = refined_text[:277] + "..."
             refined.append(refined_text)
 
-        # Select best image for the first suggestion
+        # Select best image for EACH suggestion
+        selected_image_ids: list[str | None] = []
         if available_images and refined:
-            selected_image_id = await _select_best_image(
-                llm, refined[0], available_images
-            )
+            for text in refined:
+                img_id = await _select_best_image(llm, text, available_images)
+                selected_image_ids.append(img_id)
+            selected_image_id = selected_image_ids[0] if selected_image_ids else None
+        else:
+            selected_image_ids = [None] * len(refined)
 
         return {
             "final_content": refined[0] if refined else "",
             "suggestions": refined,
             "media_asset_id": selected_image_id,
+            "media_asset_ids": selected_image_ids,
             "log": f"Refined {len(refined)} suggestions",
         }
     else:

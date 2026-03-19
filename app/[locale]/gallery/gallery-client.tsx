@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import type React from "react";
 import Link from "next/link";
 import { isVerifiedMember } from "@/lib/subscription";
+import DashboardShell from "@/components/DashboardShell";
 
 interface CommentUser {
   name: string | null;
@@ -672,69 +673,58 @@ export default function GalleryClientPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {t.title}
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {t.subtitle}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-              <div className="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 overflow-hidden">
-                <button
-                  onClick={() => updateLang("en")}
-                  className={`px-2 py-1 text-xs transition-colors ${
-                    lang === "en"
-                      ? "bg-gray-900 text-white"
-                      : "bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  onClick={() => updateLang("zh")}
-                  className={`px-2 py-1 text-xs transition-colors ${
-                    lang === "zh"
-                      ? "bg-gray-900 text-white"
-                      : "bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  中文
-                </button>
-              </div>
-              <Link
-                href="/toolbox"
-                className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+    <DashboardShell>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+              {t.title}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              {t.subtitle}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 overflow-hidden">
+              <button
+                onClick={() => updateLang("en")}
+                className={`px-2 py-1 text-xs transition-colors ${
+                  lang === "en"
+                    ? "bg-gray-900 text-white"
+                    : "bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
               >
-                {t.create}
-              </Link>
-              {isLoggedIn && (
-                <Link
-                  href="/dashboard"
-                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                >
-                  {t.dashboard}
-                </Link>
-              )}
-              {isLoggedIn === false && (
-                <Link
-                  href="/login"
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  {t.signIn}
-                </Link>
-              )}
+                EN
+              </button>
+              <button
+                onClick={() => updateLang("zh")}
+                className={`px-2 py-1 text-xs transition-colors ${
+                  lang === "zh"
+                    ? "bg-gray-900 text-white"
+                    : "bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                中文
+              </button>
             </div>
+            <Link
+              href="/toolbox"
+              className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+            >
+              {t.create}
+            </Link>
+            {isLoggedIn === false && (
+              <Link
+                href="/login"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                {t.signIn}
+              </Link>
+            )}
           </div>
         </div>
-      </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main>
         <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-6 sm:mb-8 w-full max-w-xs">
           <button
             onClick={() => setTab("public")}
@@ -846,6 +836,7 @@ export default function GalleryClientPage() {
           </>
         )}
       </main>
-    </div>
+      </div>
+    </DashboardShell>
   );
 }

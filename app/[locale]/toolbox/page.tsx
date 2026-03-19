@@ -25,6 +25,7 @@ import ToolboxHeader from "@/components/toolbox/ToolboxHeader";
 import TabSelector from "@/components/toolbox/TabSelector";
 import ConfigCard from "@/components/toolbox/ConfigCard";
 import ResultsCard from "@/components/toolbox/ResultsCard";
+import DashboardShell from "@/components/DashboardShell";
 
 export default function ToolboxPage() {
   const locale = useLocale();
@@ -955,17 +956,16 @@ export default function ToolboxPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ToolboxHeader
-        uiText={uiText}
-        prefix={prefix}
-        locale={locale}
-        creditLoading={creditLoading}
-        creditBalance={creditBalance}
-        isTrial={isTrial}
-      />
-
+    <DashboardShell>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        <ToolboxHeader
+          uiText={uiText}
+          prefix={prefix}
+          locale={locale}
+          creditLoading={creditLoading}
+          creditBalance={creditBalance}
+          isTrial={isTrial}
+        />
         <TabSelector tab={tab} onTabChange={handleTabChange} uiText={uiText} />
 
         <ConfigCard
@@ -1074,6 +1074,6 @@ export default function ToolboxPage() {
           />
         )}
       </main>
-    </div>
+    </DashboardShell>
   );
 }

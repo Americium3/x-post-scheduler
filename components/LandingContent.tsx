@@ -328,6 +328,12 @@ export default function LandingContent({
               {t("docs")}
             </Link>
             <Link
+              href={`${prefix}/pricing`}
+              className="text-gray-600 dark:text-gray-400 hover:underline underline-offset-4"
+            >
+              {locale === "zh" ? "定价" : "Pricing"}
+            </Link>
+            <Link
               href={`${prefix}/news`}
               className="text-blue-600 dark:text-blue-400 font-medium hover:underline underline-offset-4"
             >
@@ -407,6 +413,13 @@ export default function LandingContent({
                 className="rounded-md px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 {t("docs")}
+              </Link>
+              <Link
+                href={`${prefix}/pricing`}
+                onClick={() => setNavMenuOpen(false)}
+                className="rounded-md px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {locale === "zh" ? "定价" : "Pricing"}
               </Link>
               <Link
                 href={`${prefix}/news`}

@@ -13,6 +13,7 @@ class GenerateResponse(BaseModel):
     content: str | None = None
     suggestions: list[str] = []
     media_asset_id: str | None = None
+    media_asset_ids: list[str | None] = []
     pipeline_log: dict[str, str] = {}
     error: str | None = None
 

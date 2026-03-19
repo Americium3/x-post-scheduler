@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { prompt, multiple, language, model: modelId } = body;
+  const { prompt, multiple, model: modelId } = body;
+  const language = (body.language as string | undefined) || user.language;
 
   // Use agent service if configured (no model selection — agent handles routing)
   if (isAgentServiceConfigured()) {
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           suggestions: result.suggestions,
           media_asset_id: result.media_asset_id,
+          media_asset_ids: result.media_asset_ids,
           pipeline_log: result.pipeline_log,
         });
       }

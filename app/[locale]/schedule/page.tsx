@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { format } from "date-fns";
+import DashboardShell from "@/components/DashboardShell";
 
 /* ------------------------------------------------------------------ */
 /*  Single Post Form (with A/B Score + Hashtag Optimizer)             */
@@ -679,35 +680,25 @@ export default function SchedulePage() {
   const t = useTranslations("schedule");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-              {t("title")}
-            </h1>
-            <Link
-              href="/dashboard"
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              {t("cancel")}
-            </Link>
-          </div>
+    <DashboardShell>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+            {t("title")}
+          </h1>
         </div>
-      </header>
 
-      <Suspense
-        fallback={
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Suspense
+          fallback={
             <div className="animate-pulse">
               <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-48 mb-6"></div>
               <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-32"></div>
             </div>
-          </div>
-        }
-      >
-        <ScheduleForm />
-      </Suspense>
-    </div>
+          }
+        >
+          <ScheduleForm />
+        </Suspense>
+      </div>
+    </DashboardShell>
   );
 }

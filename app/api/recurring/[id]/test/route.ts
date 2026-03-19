@@ -137,7 +137,7 @@ export async function POST(
   const generated = await generateTweet(
     knowledgeContext,
     effectivePrompt,
-    schedule.aiLanguage || undefined,
+    schedule.aiLanguage || user.language || undefined,
   );
 
   if (generated.usage) {

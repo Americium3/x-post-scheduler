@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, client, description, budgetCents, startDate, endDate, notes, modelId, locale } = body;
+    const { name, client, description, budgetCents, startDate, endDate, notes, modelId } = body;
+    const locale = (body.locale as string | undefined) || user.language;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Campaign name is required" }, { status: 400 });

@@ -2,9 +2,36 @@ import { NextRequest, NextResponse } from "next/server";
 import { isGuestSessionUser, requireAuth, unauthorizedResponse } from "@/lib/auth0";
 import { deleteGalleryItem } from "@/lib/gallery";
 import { prisma } from "@/lib/db";
+import { buildSignedBlobProxyUrl } from "@/lib/blob-proxy";
+
+function resolveInputImageUrl(url: string | null, origin: string): string | null {
+  if (!url) return null;
+  // Legacy: expired proxy URL — extract raw blob URL and re-sign
+  if (url.includes("/api/toolbox/blob-proxy")) {
+    try {
+      const parsed = new URL(url);
+      const raw = parsed.searchParams.get("u");
+      if (raw && raw.includes(".private.blob.vercel-storage.com")) {
+        return buildSignedBlobProxyUrl(origin, raw, 3600);
+      }
+    } catch {
+      // fall through
+    }
+    return url;
+  }
+  // Private blob URL → sign
+  if (url.includes(".private.blob.vercel-storage.com")) {
+    try {
+      return buildSignedBlobProxyUrl(origin, url, 3600); // 1 hour TTL
+    } catch {
+      return url;
+    }
+  }
+  return url;
+}
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -16,8 +43,14 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const origin = request.nextUrl.origin;
+  const resolved = {
+    ...item,
+    inputImageUrl: resolveInputImageUrl(item.inputImageUrl, origin),
+  };
+
   if (item.isPublic) {
-    return NextResponse.json({ item });
+    return NextResponse.json({ item: resolved });
   }
 
   try {
@@ -25,7 +58,7 @@ export async function GET(
     if (item.userId !== user.id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ item });
+    return NextResponse.json({ item: resolved });
   } catch {
     return unauthorizedResponse();
   }

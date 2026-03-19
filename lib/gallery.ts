@@ -1,6 +1,23 @@
 import { put, del } from "@vercel/blob";
 import { prisma } from "./db";
 
+/**
+ * Extract the raw blob URL from a signed proxy URL.
+ * Proxy URLs look like: .../api/toolbox/blob-proxy?u=<encoded-blob-url>&exp=...&sig=...
+ * We store the raw blob URL so it can be re-signed at read time.
+ */
+function extractRawBlobUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (!url.includes("/api/toolbox/blob-proxy")) return url;
+  try {
+    const parsed = new URL(url);
+    const raw = parsed.searchParams.get("u");
+    return raw || url;
+  } catch {
+    return url;
+  }
+}
+
 const RETRYABLE_FETCH_STATUSES = new Set([403, 404, 408, 425, 429, 500, 502, 503, 504]);
 
 function sleep(ms: number) {
@@ -98,7 +115,7 @@ export async function saveToGallery(params: {
       prompt: params.prompt,
       blobUrl: persistedUrl,
       sourceUrl: params.sourceUrl,
-      inputImageUrl: params.inputImageUrl ?? null,
+      inputImageUrl: extractRawBlobUrl(params.inputImageUrl) ?? null,
       generationMeta: params.generationMeta ? JSON.stringify(params.generationMeta) : null,
       aspectRatio: params.aspectRatio ?? null,
       mimeType,

@@ -135,6 +135,7 @@ export async function processScheduledPosts() {
 export async function processRecurringSchedules() {
   const now = new Date();
   const membershipCache = new Map<string, boolean>();
+  const userLanguageCache = new Map<string, string>();
 
   const dueSchedules = await prisma.recurringSchedule.findMany({
     where: {
@@ -153,13 +154,16 @@ export async function processRecurringSchedules() {
     if (membershipActive === undefined) {
       const user = await prisma.user.findUnique({
         where: { id: schedule.userId! },
-        select: { subscriptionTier: true, subscriptionStatus: true },
+        select: { subscriptionTier: true, subscriptionStatus: true, language: true },
       });
       membershipActive = isVerifiedMember(
         user?.subscriptionTier,
         user?.subscriptionStatus,
       );
       membershipCache.set(schedule.userId!, membershipActive);
+      if (user?.language) {
+        userLanguageCache.set(schedule.userId!, user.language);
+      }
     }
 
     // Allow non-members if they have credits (pay-per-use)
@@ -243,7 +247,7 @@ export async function processRecurringSchedules() {
           const generated = await generateTweet(
             knowledgeContext,
             effectivePrompt,
-            schedule.aiLanguage || undefined,
+            schedule.aiLanguage || userLanguageCache.get(schedule.userId!) || undefined,
             recentPosts,
             contentProfile,
           );

@@ -44,10 +44,23 @@ export async function proxy(request: Request) {
 
   if (pathname.startsWith("/api/analytics/")) return;
 
-  const localeResponse = handleLocaleRouting(request);
-  if (localeResponse) return localeResponse;
+  // Auth0 middleware must run first so that session/transaction cookies are
+  // always read & written correctly (login, callback, logout, rolling session).
+  const authResponse = await auth0.middleware(request);
 
-  return await auth0.middleware(request);
+  const localeResponse = handleLocaleRouting(request);
+  if (localeResponse) {
+    // Carry over any Set-Cookie headers from the auth middleware
+    if (authResponse) {
+      const setCookies = authResponse.headers.getSetCookie?.() ?? [];
+      for (const cookie of setCookies) {
+        localeResponse.headers.append("Set-Cookie", cookie);
+      }
+    }
+    return localeResponse;
+  }
+
+  return authResponse;
 }
 
 export const config = {
