@@ -16,7 +16,4 @@ const domain =
 export const auth0 = new Auth0Client({
   appBaseUrl,
   domain,
-  secret: sanitize(process.env.AUTH0_SECRET),
-  clientId: sanitize(process.env.AUTH0_CLIENT_ID),
-  clientSecret: sanitize(process.env.AUTH0_CLIENT_SECRET),
 });
