@@ -1,5 +1,3 @@
-import { prisma } from "./db";
-
 type CronLogInput = {
   jobName: string;
   endpoint: string;
@@ -12,33 +10,47 @@ type CronLogInput = {
   metadata?: unknown;
 };
 
-function safeStringify(value: unknown): string | null {
-  if (value === undefined) return null;
+const BETTER_STACK_URL = "https://in.logs.betterstack.com";
+
+async function sendToBetterStack(payload: Record<string, unknown>) {
+  const apiKey = process.env.BETTER_STACK_API_KEY;
+  if (!apiKey) {
+    console.log("[cron-log]", JSON.stringify(payload));
+    return;
+  }
+
   try {
-    return JSON.stringify(value);
-  } catch {
-    return null;
+    await fetch(BETTER_STACK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error("[cron-log] Failed to send to Better Stack:", err);
+    console.log("[cron-log]", JSON.stringify(payload));
   }
 }
 
 export async function logCronRun(input: CronLogInput) {
-  try {
-    await prisma.cronRunEvent.create({
-      data: {
-        jobName: input.jobName,
-        endpoint: input.endpoint,
-        method: input.method ?? "POST",
-        success: input.success,
-        statusCode: input.statusCode,
-        durationMs: input.durationMs,
-        triggeredBy: input.triggeredBy,
-        error: input.error ?? null,
-        metadata: safeStringify(input.metadata),
-      },
-    });
-  } catch (error) {
-    console.error("Failed to persist cron run event:", error);
-  }
+  const payload = {
+    dt: new Date().toISOString(),
+    level: input.success ? "info" : "error",
+    message: `[${input.jobName}] ${input.success ? "OK" : "FAIL"} ${input.statusCode ?? ""}`.trim(),
+    jobName: input.jobName,
+    endpoint: input.endpoint,
+    method: input.method ?? "POST",
+    success: input.success,
+    statusCode: input.statusCode,
+    durationMs: input.durationMs,
+    triggeredBy: input.triggeredBy,
+    error: input.error ?? null,
+    metadata: input.metadata ?? null,
+  };
+
+  await sendToBetterStack(payload);
 }
 
 export function detectCronTrigger(request: Request): string {

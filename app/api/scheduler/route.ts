@@ -8,16 +8,6 @@ export async function POST(request: NextRequest) {
   if (cronSecret) {
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${cronSecret}`) {
-      await logCronRun({
-        jobName: "scheduler",
-        endpoint: "/api/scheduler",
-        method: "POST",
-        success: false,
-        statusCode: 401,
-        durationMs: Date.now() - startedAt,
-        triggeredBy: detectCronTrigger(request),
-        error: "Unauthorized",
-      });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }
