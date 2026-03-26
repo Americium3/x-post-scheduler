@@ -83,6 +83,55 @@ export const TEXT_MODELS: AiTextModel[] = [
     provider: "Mistral",
     description: "Balanced performance",
   },
+  // OpenRouter Free Models
+  {
+    id: "openrouter/openai/gpt-oss-120b:free",
+    label: "GPT-OSS 120B (Free)",
+    provider: "OpenAI",
+    description: "Open-source 120B, free",
+  },
+  {
+    id: "openrouter/nvidia/nemotron-3-super:free",
+    label: "Nemotron 3 Super (Free)",
+    provider: "NVIDIA",
+    description: "543B params, free",
+  },
+  {
+    id: "openrouter/qwen/qwen3-coder-480b-a35b:free",
+    label: "Qwen3 Coder 480B (Free)",
+    provider: "Qwen",
+    description: "Massive MoE, free",
+  },
+  {
+    id: "openrouter/meta-llama/llama-3.3-70b-instruct:free",
+    label: "Llama 3.3 70B (Free)",
+    provider: "Meta",
+    description: "Strong all-rounder, free",
+  },
+  {
+    id: "openrouter/google/gemma-3-27b-it:free",
+    label: "Gemma 3 27B (Free)",
+    provider: "Google",
+    description: "131K context, free",
+  },
+  {
+    id: "openrouter/mistralai/mistral-small-3.1-24b-instruct:free",
+    label: "Mistral Small 3.1 24B (Free)",
+    provider: "Mistral",
+    description: "128K context, free",
+  },
+  {
+    id: "openrouter/deepseek/deepseek-chat-v3-0324:free",
+    label: "DeepSeek V3 (Free)",
+    provider: "DeepSeek",
+    description: "Strong reasoning, free",
+  },
+  {
+    id: "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
+    label: "Hermes 3 405B (Free)",
+    provider: "Nous",
+    description: "Largest free model",
+  },
 ];
 
 export const DEFAULT_TEXT_MODEL = TEXT_MODELS.find((m) => m.isDefault)!;
