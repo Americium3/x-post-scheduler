@@ -10,6 +10,7 @@ import MediaDailyWidget from "@/components/MediaDailyWidget";
 import EngageSuggestions from "@/components/EngageSuggestions";
 import ReferralAttributor from "@/components/ReferralAttributor";
 import DashboardShell from "@/components/DashboardShell";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import { redirect } from "next/navigation";
 import { headers as nextHeaders } from "next/headers";
 import { getTranslations, getLocale, setRequestLocale } from "next-intl/server";
@@ -179,6 +180,8 @@ export default async function Dashboard({
     <DashboardShell>
       <ReferralAttributor />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AnnouncementBanner />
+
         {/* Media Daily Widget */}
         <MediaDailyWidget locale={locale} />
 
