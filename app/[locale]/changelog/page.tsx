@@ -37,6 +37,87 @@ export default async function ChangelogPage({
 
         {/* Timeline */}
         <div className="space-y-8">
+          {/* 2026-03 Free AI Models */}
+          <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                  {isZh ? "新功能" : "New Feature"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年3月25日" : "March 25, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "免费 AI 模型正式上线!"
+                  : "Free AI Models Now Available!"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      我们很高兴地宣布，xPilot 现已集成多款<strong>完全免费</strong>的顶级 AI 模型，覆盖文本创作和图片生成两大场景。零成本，无限创作！
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      免费文本模型
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>Meta Llama 3.3 70B</strong> — Meta 最新开源大模型，全能型选手</li>
+                      <li><strong>DeepSeek V3</strong> — 深度求索，强推理能力</li>
+                      <li><strong>Google Gemma 3 27B</strong> — Google 开源模型，131K 超长上下文</li>
+                      <li><strong>NVIDIA Nemotron 3 Super</strong> — 543B 参数，262K 上下文</li>
+                      <li><strong>Mistral Small 3.1 24B</strong> — Mistral AI 出品，128K 上下文</li>
+                      <li><strong>OpenAI GPT-OSS 120B</strong> — OpenAI 开源 120B 模型</li>
+                      <li><strong>Qwen3 Coder 480B</strong> — 通义千问超大 MoE 模型</li>
+                      <li><strong>Nous Hermes 3 405B</strong> — 最大免费模型</li>
+                    </ul>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      免费图片生成模型
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>FLUX.2 Pro / Max / Flex / Klein</strong> — Black Forest Labs 出品，业界领先的图片生成模型</li>
+                      <li><strong>Seedream 4.5</strong> — ByteDance 字节跳动出品，原生中英双语支持</li>
+                    </ul>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      所有免费模型均可在工具箱中直接使用，无需消耗积分。前往<strong>工具箱</strong>立即体验！
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      We're excited to announce that xPilot now includes multiple <strong>completely free</strong> top-tier AI models for both text generation and image creation. Zero cost, unlimited creativity!
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      Free Text Models
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>Meta Llama 3.3 70B</strong> — Meta&apos;s latest open-source model, strong all-rounder</li>
+                      <li><strong>DeepSeek V3</strong> — Powerful reasoning capabilities</li>
+                      <li><strong>Google Gemma 3 27B</strong> — 131K context window</li>
+                      <li><strong>NVIDIA Nemotron 3 Super</strong> — 543B parameters, 262K context</li>
+                      <li><strong>Mistral Small 3.1 24B</strong> — By Mistral AI, 128K context</li>
+                      <li><strong>OpenAI GPT-OSS 120B</strong> — OpenAI&apos;s open-source 120B model</li>
+                      <li><strong>Qwen3 Coder 480B</strong> — Massive MoE model by Alibaba</li>
+                      <li><strong>Nous Hermes 3 405B</strong> — Largest free model available</li>
+                    </ul>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      Free Image Generation Models
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>FLUX.2 Pro / Max / Flex / Klein</strong> — By Black Forest Labs, industry-leading image generation</li>
+                      <li><strong>Seedream 4.5</strong> — By ByteDance, native Chinese &amp; English support</li>
+                    </ul>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      All free models are available directly in the Toolbox with no credit cost. Head to the <strong>Toolbox</strong> to try them now!
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* 2026-03 Partnership with Numix */}
           <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
             <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>

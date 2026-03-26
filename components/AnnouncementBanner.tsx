@@ -15,12 +15,12 @@ export default function AnnouncementBanner() {
     badge: "NEW",
     title: "免费 AI 模型已上线!",
     description: "现在可以免费使用多款顶级 AI 模型进行文本创作和图片生成 — 包括 Meta Llama 3.3 70B、DeepSeek V3、Google Gemma 3 27B、NVIDIA Nemotron 543B 等文本模型，以及 FLUX.2 Pro/Max、Seedream 4.5 等图片生成模型。零成本，无限创作!",
-    cta: "立即体验",
+    cta: "了解详情",
   } : {
     badge: "NEW",
     title: "Free AI Models Now Available!",
     description: "Create content and generate images for free with top AI models — including Meta Llama 3.3 70B, DeepSeek V3, Google Gemma 3 27B, NVIDIA Nemotron 543B for text, and FLUX.2 Pro/Max, Seedream 4.5 for image generation. Zero cost, unlimited creativity!",
-    cta: "Try Now",
+    cta: "Learn More",
   };
 
   return (
@@ -47,7 +47,7 @@ export default function AnnouncementBanner() {
           </p>
         </div>
         <Link
-          href={`${prefix}/toolbox`}
+          href={`${prefix}/changelog`}
           className="self-start sm:self-center shrink-0 rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
         >
           {content.cta}
