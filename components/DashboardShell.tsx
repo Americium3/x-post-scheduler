@@ -15,6 +15,7 @@ export default function DashboardShell({
   const tNav = useTranslations("nav");
   const prefix = locale === "zh" ? "/zh" : "";
 
+  const tUser = useTranslations("userMenu");
   const navLinks = [
     { href: `${prefix}/dashboard`, label: locale === "zh" ? "仪表盘" : "Dashboard" },
     { href: `${prefix}/gallery`, label: tNav("gallery") },
@@ -25,6 +26,7 @@ export default function DashboardShell({
     { href: `${prefix}/campaigns`, label: tNav("campaigns") },
     { href: `${prefix}/analytics`, label: tNav("analytics") },
     { href: `${prefix}/news`, label: tNav("intelligence"), highlight: true },
+    { href: `${prefix}/settings`, label: tUser("settings") },
   ];
 
   function isActive(href: string) {
