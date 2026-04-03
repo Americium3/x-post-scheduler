@@ -1,4 +1,4 @@
-import { put, del } from "@vercel/blob";
+import { put, del } from "./r2";
 import { prisma } from "./db";
 
 /**
@@ -50,12 +50,6 @@ async function fetchWithRetry(url: string, attempts = 5, baseDelayMs = 800) {
   );
 }
 
-function isPrivateStoreAccessError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const message = error.message.toLowerCase();
-  return message.includes("private store") && message.includes("public access");
-}
-
 function getExtFromMime(mimeType: string): string {
   switch (mimeType) {
     case "image/jpeg": return "jpg";
@@ -90,21 +84,11 @@ export async function saveToGallery(params: {
   const blobPath = `gallery/${params.userId}/${params.type}/${Date.now()}.${ext}`;
 
   const buffer = Buffer.from(await response.arrayBuffer());
-  let persistedUrl = params.sourceUrl;
-  try {
-    const uploaded = await put(blobPath, buffer, {
-      access: "public",
-      addRandomSuffix: true,
-      contentType: mimeType,
-    });
-    persistedUrl = uploaded.url;
-  } catch (error) {
-    // If Blob store is configured as private, keep feature usable by falling
-    // back to the source URL instead of failing the whole save action.
-    if (!isPrivateStoreAccessError(error)) {
-      throw error;
-    }
-  }
+  const uploaded = await put(blobPath, buffer, {
+    addRandomSuffix: true,
+    contentType: mimeType,
+  });
+  const persistedUrl = uploaded.url;
 
   return prisma.galleryItem.create({
     data: {
@@ -129,7 +113,7 @@ export async function deleteGalleryItem(itemId: string, userId: string) {
   if (!item || item.userId !== userId) {
     throw new Error("Not found or unauthorized");
   }
-  // Delete from Vercel Blob
+  // Delete from R2 storage
   if (item.blobUrl !== item.sourceUrl) {
     try {
       await del(item.blobUrl);

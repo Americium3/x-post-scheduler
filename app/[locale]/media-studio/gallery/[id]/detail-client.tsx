@@ -149,7 +149,7 @@ export default function GalleryDetailClient({ id }: { id: string }) {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t.title}</h1>
           </div>
-          <Link href="/gallery" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+          <Link href="/media-studio/gallery" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
             {t.back}
           </Link>
         </div>

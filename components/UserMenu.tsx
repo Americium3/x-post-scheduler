@@ -155,25 +155,39 @@ export default function UserMenu({
                 {tNav("dashboard") || "Dashboard"}
               </Link>
               <Link
-                href={`${prefix}/gallery`}
-                onClick={() => setIsOpen(false)}
-                className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                {tNav("gallery")}
-              </Link>
-              <Link
-                href={`${prefix}/toolbox`}
+                href={`${prefix}/media-studio`}
                 onClick={() => setIsOpen(false)}
                 className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 {tNav("toolbox")}
               </Link>
               <Link
-                href={`${prefix}/schedule`}
+                href={`${prefix}/media-studio/video`}
                 onClick={() => setIsOpen(false)}
                 className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                {tNav("compose")}
+                {tNav("video")}
+              </Link>
+              <Link
+                href={`${prefix}/media-studio/gallery/generate`}
+                onClick={() => setIsOpen(false)}
+                className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {tNav("images")}
+              </Link>
+              <Link
+                href={`${prefix}/media-studio/posts`}
+                onClick={() => setIsOpen(false)}
+                className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {tNav("posts")}
+              </Link>
+              <Link
+                href={`${prefix}/media-studio/gallery`}
+                onClick={() => setIsOpen(false)}
+                className="rounded-md px-2.5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {tNav("gallery")}
               </Link>
               <Link
                 href={`${prefix}/recurring`}

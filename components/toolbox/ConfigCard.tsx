@@ -223,17 +223,17 @@ export default function ConfigCard({
                 {
                   key: "t2i",
                   label: "Text to Image",
-                  path: "/toolbox?tab=image&mode=t2i",
+                  path: "/media-studio/video?tab=image&mode=t2i",
                 },
                 {
                   key: "i2i",
                   label: "Image to Image",
-                  path: "/toolbox?tab=image&mode=i2i",
+                  path: "/media-studio/video?tab=image&mode=i2i",
                 },
                 {
                   key: "i2i_text",
                   label: "Image + Text to Image",
-                  path: "/toolbox?tab=image&mode=i2i_text",
+                  path: "/media-studio/video?tab=image&mode=i2i_text",
                 },
               ] as const
             ).map((modeOption) => (
@@ -461,14 +461,8 @@ export default function ConfigCard({
             Visiting Path:{" "}
             <code className="text-gray-800 dark:text-gray-200">
               {tab === "video"
-                ? `/toolbox?tab=video&mode=${videoMode}`
+                ? `/media-studio/video?tab=video&mode=${videoMode}`
                 : getImageModePath(imageMode)}
-            </code>
-          </p>
-          <p className="text-xs text-gray-600 dark:text-gray-400 break-all">
-            Model Path:{" "}
-            <code className="text-gray-800 dark:text-gray-200">
-              {selectedModel?.id ?? currentModelId}
             </code>
           </p>
         </div>
@@ -659,34 +653,21 @@ export default function ConfigCard({
         {/* Estimated usage & cost */}
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 p-3 space-y-1.5">
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-            Estimated Usage & Cost
+            {locale === "zh" ? "预估用量与费用" : "Estimated Usage & Cost"}
           </p>
           <p className="text-xs text-gray-600 dark:text-gray-400">
-            Model-side prompt tokens (est.): ~
-            {estimatedPromptTokens.toLocaleString()}
-          </p>
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            User charge (single run):{" "}
+            {locale === "zh" ? "预估费用" : "Estimated cost"}:{" "}
             {formatUsdFromCents(estimatedSingleChargeCents)}
             {tab === "video"
-              ? ` · duration factor x${durationFactor.toFixed(1)}`
+              ? ` · ${locale === "zh" ? "时长系数" : "duration factor"} x${durationFactor.toFixed(1)}`
               : ""}
-          </p>
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            Model provider cost (single run):{" "}
-            {formatUsdFromCents(estimatedSingleBaseCostCents)}
           </p>
           {runCount > 1 && (
             <p className="text-xs text-gray-600 dark:text-gray-400">
-              Total for {runCount} runs:{" "}
-              {formatUsdFromCents(estimatedTotalChargeCents)} charged ·{" "}
-              {formatUsdFromCents(estimatedTotalBaseCostCents)} provider cost
+              {locale === "zh" ? `共 ${runCount} 段` : `Total for ${runCount} runs`}:{" "}
+              {formatUsdFromCents(estimatedTotalChargeCents)}
             </p>
           )}
-          <p className="text-[11px] text-gray-500 dark:text-gray-500">
-            Note: The image/video service is task-priced. Token estimate is
-            prompt-length based and for reference only.
-          </p>
         </div>
 
         {/* Save as public checkbox */}
@@ -722,14 +703,10 @@ export default function ConfigCard({
           className="w-full py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isRunning
-            ? tab === "image"
-              ? "生成中..."
-              : "generating" === "generating"
-                ? "Submitting..."
-                : "Generating..."
+            ? locale === "zh" ? "处理中..." : "Processing..."
             : tab === "image"
-              ? "生成图片"
-              : "Generate Video"}
+              ? locale === "zh" ? "生成图片" : "Generate Image"
+              : locale === "zh" ? "生成视频" : "Generate Video"}
         </button>
       </div>
     </div>

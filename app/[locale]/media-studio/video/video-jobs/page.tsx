@@ -312,10 +312,10 @@ export default function VideoJobsPage() {
             </p>
           </div>
           <Link
-            href="/toolbox"
+            href="/media-studio/video"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            ← Back to Toolbox
+            ← Back to Multimedia
           </Link>
         </div>
 
@@ -384,7 +384,7 @@ export default function VideoJobsPage() {
               No video generation jobs found
             </p>
             <Link
-              href="/toolbox"
+              href="/media-studio/video"
               className="text-blue-600 dark:text-blue-400 hover:underline mt-2"
             >
               Start generating →

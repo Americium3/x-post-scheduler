@@ -1,7 +1,7 @@
 {
   "nav": {
     "dashboard": "仪表盘",
-    "gallery": "作品社区",
+    "gallery": "作品展示",
     "toolbox": "媒体工作室",
     "generate": "AI 发帖调度",
     "compose": "创作帖子",
@@ -12,6 +12,11 @@
     "campaigns": "案子",
     "monitoring": "舆情监控",
     "intelligence": "情报中心",
+    "multimedia": "多媒体",
+    "video": "视频",
+    "posts": "帖子",
+    "images": "图库",
+    "assets": "素材管理",
     "appTitle": "X 推创"
   },
   "userMenu": {

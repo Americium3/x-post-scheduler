@@ -10,8 +10,8 @@ export async function GET(
   try {
     const provider = (request.nextUrl.searchParams.get("provider") ?? "wavespeed") as VideoProvider;
     const pollUrl = request.nextUrl.searchParams.get("pollUrl") ?? taskId;
-    // Seedance uses task ID directly; Wavespeed uses pollUrl
-    const task = await pollVideo(provider === "seedance" ? taskId : pollUrl, provider);
+    // Seedance/BytePlus use task ID directly; Wavespeed uses pollUrl
+    const task = await pollVideo(provider === "seedance" || provider === "byteplus" ? taskId : pollUrl, provider);
     return NextResponse.json({ task });
   } catch (error) {
     console.error("Video poll error:", error);

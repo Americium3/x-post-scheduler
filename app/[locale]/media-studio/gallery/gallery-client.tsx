@@ -361,7 +361,7 @@ function MediaCard({
 
       <div className="p-3 space-y-2">
         <Link
-          href={`/gallery/${item.id}`}
+          href={`/media-studio/gallery/${item.id}`}
           className="inline-block text-xs text-blue-600 dark:text-blue-400 hover:underline"
         >
           {t.details}
@@ -708,7 +708,7 @@ export default function GalleryClientPage() {
               </button>
             </div>
             <Link
-              href="/toolbox"
+              href="/media-studio/video"
               className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
             >
               {t.create}
@@ -795,7 +795,7 @@ export default function GalleryClientPage() {
             <p className="text-4xl mb-3">🖼</p>
             <p>{tab === "public" ? t.noPublic : t.noMine}</p>
             <Link
-              href="/toolbox"
+              href="/media-studio/video"
               className="mt-4 inline-block text-purple-600 hover:underline text-sm"
             >
               {t.toToolbox}

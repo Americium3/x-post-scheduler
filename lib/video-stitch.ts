@@ -1,6 +1,6 @@
 import ffmpeg from "fluent-ffmpeg";
 import explicitFfmpegPath from "ffmpeg-static";
-import { put } from "@vercel/blob";
+import { put } from "./r2";
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -183,26 +183,10 @@ export async function stitchVideos(videoUrls: string[]): Promise<string> {
     console.log(`[Stitch] Uploading result...`);
     const fileContent = fs.readFileSync(outputPath);
     
-    let blob;
-    try {
-      // Try public access first
-      blob = await put(`stitched/${outputFileName}`, fileContent, {
-        access: "public",
-        contentType: "video/mp4",
-        addRandomSuffix: false
-      });
-    } catch (e: any) {
-      if (e.message?.includes("private store")) {
-        console.log(`[Stitch] Public access failed, falling back to private access...`);
-        blob = await put(`stitched/${outputFileName}`, fileContent, {
-          access: "private",
-          contentType: "video/mp4", 
-          addRandomSuffix: false
-        });
-      } else {
-        throw e;
-      }
-    }
+    const blob = await put(`stitched/${outputFileName}`, fileContent, {
+      contentType: "video/mp4",
+      addRandomSuffix: false,
+    });
 
     return blob.url;
   } finally {
@@ -365,24 +349,10 @@ export async function stitchVideosWithTrim(options: StitchOptions): Promise<stri
     console.log(`[StitchTrim] Uploading result...`);
     const fileContent = fs.readFileSync(outputPath);
 
-    let blob;
-    try {
-      blob = await put(`stitched/${outputFileName}`, fileContent, {
-        access: "public",
-        contentType: "video/mp4",
-        addRandomSuffix: false,
-      });
-    } catch (e: any) {
-      if (e.message?.includes("private store")) {
-        blob = await put(`stitched/${outputFileName}`, fileContent, {
-          access: "private",
-          contentType: "video/mp4",
-          addRandomSuffix: false,
-        });
-      } else {
-        throw e;
-      }
-    }
+    const blob = await put(`stitched/${outputFileName}`, fileContent, {
+      contentType: "video/mp4",
+      addRandomSuffix: false,
+    });
 
     return blob.url;
   } finally {

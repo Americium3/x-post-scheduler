@@ -30,14 +30,14 @@ export default function ToolboxHeader({
       <div className="flex items-center gap-3 shrink-0">
         <div className="hidden sm:flex items-center gap-3 text-sm">
           <Link
-            href={`${prefix}/toolbox/video-jobs`}
+            href={`${prefix}/media-studio/video/video-jobs`}
             className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           >
             {uiText.videoJobs}
           </Link>
           {uiText.videoStitch && (
             <Link
-              href={`${prefix}/toolbox/video-stitch`}
+              href={`${prefix}/media-studio/video/video-stitch`}
               className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               {uiText.videoStitch}

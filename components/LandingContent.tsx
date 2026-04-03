@@ -316,7 +316,7 @@ export default function LandingContent({
 
           <div className="hidden md:flex items-center gap-4 text-sm">
             <Link
-              href={`${prefix}/gallery`}
+              href={`${prefix}/media-studio/gallery`}
               className="text-gray-600 dark:text-gray-400 hover:underline underline-offset-4"
             >
               {t("galleryFeed")}
@@ -401,7 +401,7 @@ export default function LandingContent({
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex flex-col gap-2 text-sm">
               <Link
-                href={`${prefix}/gallery`}
+                href={`${prefix}/media-studio/gallery`}
                 onClick={() => setNavMenuOpen(false)}
                 className="rounded-md px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >

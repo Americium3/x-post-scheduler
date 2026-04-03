@@ -1,7 +1,7 @@
 {
   "nav": {
     "dashboard": "Dashboard",
-    "gallery": "Community",
+    "gallery": "Gallery",
     "toolbox": "Media Studio",
     "generate": "AI Post Scheduler",
     "compose": "Compose Post",
@@ -12,6 +12,11 @@
     "campaigns": "Campaigns",
     "monitoring": "Sentiment Monitor",
     "intelligence": "Intelligence",
+    "multimedia": "Multimedia",
+    "video": "Video",
+    "posts": "Posts",
+    "images": "Images",
+    "assets": "Materials",
     "appTitle": "xPilot"
   },
   "userMenu": {

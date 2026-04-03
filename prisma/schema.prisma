@@ -63,6 +63,7 @@ model User {
   galleryItems       GalleryItem[]
   webVisits          WebVisit[]
   videoJobs          VideoJob[]
+  mediaTasks         MediaTask[]
   galleryLikes       GalleryLike[]
   galleryComments    GalleryComment[]
   followers          UserFollow[] @relation("Following")
@@ -389,6 +390,47 @@ model VideoJob {
   completedAt   DateTime?
   
   @@index([userId, status])
+  @@index([createdAt])
+}
+
+model MediaTask {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Task configuration
+  type          String   // "video" | "image"
+  modelId       String
+  modelLabel    String
+  prompt        String
+  mode          String   // "t2v" | "i2v" | "t2i" | "i2i" | "i2i_text"
+  duration      Int?
+  aspectRatio   String   @default("16:9")
+  generateAudio Boolean  @default(false)
+  lockCamera    Boolean  @default(false)
+  inputImageUrl String?
+
+  // Provider task tracking
+  provider      String   // "wavespeed" | "seedance" | "byteplus"
+  providerTaskId String?
+  providerPollUrl String?
+
+  // Task state
+  status        String   @default("pending") // "pending" | "processing" | "completed" | "failed"
+  outputUrl     String?
+  error         String?
+  pollAttempts  Int      @default(0)
+
+  // Cost tracking
+  feeCents      Int      @default(0)
+  byok          Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  completedAt   DateTime?
+
+  @@index([userId, status])
+  @@index([status, createdAt])
   @@index([createdAt])
 }
 

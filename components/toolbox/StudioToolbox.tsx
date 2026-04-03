@@ -27,7 +27,7 @@ import ConfigCard from "@/components/toolbox/ConfigCard";
 import ResultsCard from "@/components/toolbox/ResultsCard";
 import DashboardShell from "@/components/DashboardShell";
 
-export default function ToolboxPage() {
+export default function StudioToolbox({ defaultTab = "video" as Tab }: { defaultTab?: Tab }) {
   const locale = useLocale();
   const isZh = locale === "zh";
   const prefix = isZh ? "/zh" : "";
@@ -71,7 +71,7 @@ export default function ToolboxPage() {
         imageToVideo: "Image to Video",
       };
 
-  const [tab, setTab] = useState<Tab>("image");
+  const [tab, setTab] = useState<Tab>(defaultTab);
 
   // Credit balance & subscription
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
@@ -86,6 +86,7 @@ export default function ToolboxPage() {
   const [error, setError] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
+  const [backgroundTaskSubmitted, setBackgroundTaskSubmitted] = useState(false);
 
   // video-specific
   const [videoModelId, setVideoModelId] = useState(VIDEO_MODELS[0].id);
@@ -241,7 +242,7 @@ export default function ToolboxPage() {
     pollUrl?: string,
     onComplete?: (url: string) => void,
     cleanupInputUrl?: string | null,
-    provider?: "wavespeed" | "seedance",
+    provider?: "wavespeed" | "seedance" | "byteplus",
   ) => {
     pollRef.current = setTimeout(async () => {
       try {
@@ -347,7 +348,7 @@ export default function ToolboxPage() {
     }
   };
 
-  const pollVideoSync = (id: string, pollUrl?: string, provider?: "wavespeed" | "seedance") =>
+  const pollVideoSync = (id: string, pollUrl?: string, provider?: "wavespeed" | "seedance" | "byteplus") =>
     new Promise<string>((resolve, reject) => {
       const tick = async () => {
         try {
@@ -790,18 +791,11 @@ export default function ToolboxPage() {
       if (!res.ok) throw new Error(data.error);
 
       const id = data.task.id;
-      const videoPollUrl: string | undefined = data.task?.urls?.get;
-      const videoProvider = activeModelId.startsWith("seedance-2.0/") ? "seedance" as const : "wavespeed" as const;
       setTaskId(id);
-      setWsPollUrl(videoPollUrl ?? null);
-      setStatus("processing");
-      const model = activeModels.find((m) => m.id === activeModelId)!;
-      pollVideo(id, videoPollUrl, (outUrl) => {
-        saveToGallery("video", activeModelId, model.label, outUrl, ASPECT_RATIOS[aspectIdx].value, {
-          inputImageUrl: videoMode === "i2v" ? (i2vImageUrl ?? undefined) : undefined,
-          generationMeta: { provider: videoProvider, kind: "video", mode: videoMode, duration, generateAudio, taskId: id, pollUrl: videoPollUrl ?? null },
-        });
-      }, videoMode === "i2v" ? i2vImageUrl : null, videoProvider);
+      stopTimer();
+      setStatus("completed");
+      setBackgroundTaskSubmitted(true);
+      if (data.remainingCents !== undefined) setCreditBalance(data.remainingCents);
     } catch (err) {
       stopTimer();
       setStatus("failed");
@@ -883,6 +877,7 @@ export default function ToolboxPage() {
     setWsPollUrl(null);
     setError("");
     setElapsed(0);
+    setBackgroundTaskSubmitted(false);
     setSaveStatus("idle");
     setSavedItemId(null);
     setSavedBlobUrl(null);
@@ -1022,7 +1017,34 @@ export default function ToolboxPage() {
           onGenerate={tab === "image" ? handleGenerateImage : enableLongVideo ? handleGenerateLongVideo : handleGenerateVideo}
         />
 
-        {(isRunning || status === "completed" || status === "failed") && (
+        {backgroundTaskSubmitted && (
+          <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-5 text-center space-y-3">
+            <p className="text-lg font-medium text-green-700 dark:text-green-400">
+              {locale === "zh" ? "🎬 视频任务已提交！" : "🎬 Video task submitted!"}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {locale === "zh"
+                ? "视频正在后台生成中，完成后将自动保存到作品展示。你可以关闭此页面。"
+                : "Your video is being generated in the background. It will be auto-saved to Gallery when complete. You can close this page."}
+            </p>
+            <div className="flex justify-center gap-3">
+              <a
+                href={`${prefix}/media-studio/assets`}
+                className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+              >
+                {locale === "zh" ? "查看任务进度" : "View Task Progress"}
+              </a>
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                {locale === "zh" ? "继续创建" : "Create Another"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!backgroundTaskSubmitted && (isRunning || status === "completed" || status === "failed") && (
           <ResultsCard
             tab={tab}
             status={status}

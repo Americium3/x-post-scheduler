@@ -16,11 +16,14 @@ export default function DashboardShell({
   const prefix = locale === "zh" ? "/zh" : "";
 
   const tUser = useTranslations("userMenu");
-  const navLinks = [
+  const navLinks: { href: string; label: string; highlight?: boolean; indent?: boolean }[] = [
     { href: `${prefix}/dashboard`, label: locale === "zh" ? "仪表盘" : "Dashboard" },
-    { href: `${prefix}/gallery`, label: tNav("gallery") },
-    { href: `${prefix}/toolbox`, label: tNav("toolbox") },
-    { href: `${prefix}/schedule`, label: tNav("compose") },
+    { href: `${prefix}/media-studio`, label: tNav("toolbox") },
+    { href: `${prefix}/media-studio/video`, label: tNav("video"), indent: true },
+    { href: `${prefix}/media-studio/gallery/generate`, label: tNav("images"), indent: true },
+    { href: `${prefix}/media-studio/posts`, label: tNav("posts"), indent: true },
+    { href: `${prefix}/media-studio/gallery`, label: tNav("gallery"), indent: true },
+    { href: `${prefix}/media-studio/assets`, label: tNav("assets"), indent: true },
     { href: `${prefix}/recurring`, label: tNav("autoPost") },
     { href: `${prefix}/knowledge`, label: tNav("knowledge") },
     { href: `${prefix}/campaigns`, label: tNav("campaigns") },
@@ -33,8 +36,8 @@ export default function DashboardShell({
     // Strip locale prefix for comparison
     const clean = pathname.replace(/^\/(en|zh)/, "") || "/";
     const hrefClean = href.replace(/^\/(en|zh)/, "") || "/";
-    // Exact match for dashboard, prefix match for others
-    if (hrefClean === "/dashboard") return clean === "/dashboard";
+    // Exact match for dashboard and media-studio hub
+    if (hrefClean === "/dashboard" || hrefClean === "/media-studio") return clean === hrefClean;
     return clean.startsWith(hrefClean);
   }
 
@@ -56,12 +59,14 @@ export default function DashboardShell({
             <Link
               key={link.href}
               href={link.href}
-              className={`block px-3 py-2 rounded-md text-sm ${
+              className={`block ${link.indent ? "pl-7 pr-3" : "px-3"} py-2 rounded-md text-sm ${
                 isActive(link.href)
                   ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
                   : link.highlight
                     ? "text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    : link.indent
+                      ? "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
             >
               {link.label}

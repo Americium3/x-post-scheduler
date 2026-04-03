@@ -2,7 +2,7 @@ import { prisma } from "./db";
 import { submitVideo, pollVideo, detectVideoProvider } from "./video-provider";
 import { deductWavespeedCredits } from "./credits";
 import { trackWavespeedUsage } from "./usage-tracking";
-import { put } from "@vercel/blob";
+import { put } from "./r2";
 import { saveToGallery } from "./gallery";
 import { buildSignedBlobProxyUrl } from "./blob-proxy";
 import { stitchVideos, extractLastFrame } from "./video-stitch";

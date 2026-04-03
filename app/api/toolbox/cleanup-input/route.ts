@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { del } from "@vercel/blob";
+import { del } from "@/lib/r2";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";
 
 function extractBlobUrl(inputUrl: string): string | null {
   try {
     const parsed = new URL(inputUrl);
+    // Support signed proxy URLs
     if (parsed.pathname === "/api/toolbox/blob-proxy") {
       const raw = parsed.searchParams.get("u");
       if (!raw) return null;
-      const decoded = decodeURIComponent(raw);
-      const target = new URL(decoded);
-      if (!target.hostname.endsWith(".blob.vercel-storage.com")) return null;
-      return target.toString();
+      return decodeURIComponent(raw);
     }
-    if (parsed.hostname.endsWith(".blob.vercel-storage.com")) {
+    // Accept both legacy Vercel Blob URLs and R2 URLs
+    const r2PublicUrl = process.env.R2_PUBLIC_URL ?? "";
+    if (
+      parsed.hostname.endsWith(".blob.vercel-storage.com") ||
+      (r2PublicUrl && inputUrl.startsWith(r2PublicUrl))
+    ) {
       return parsed.toString();
     }
     return null;

@@ -508,7 +508,7 @@ export default function VideoStitchPage() {
         />
         {/* Back link */}
         <a
-          href={`${prefix}/toolbox`}
+          href={`${prefix}/media-studio/video`}
           className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
           {t.backToToolbox}

@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { put } from "./r2";
 import { prisma } from "./db";
 import { ScrapedImage } from "./scraper";
 
@@ -175,7 +175,7 @@ export async function syncKnowledgeSourceThumbnails(params: {
   knowledgeSourceId: string;
   thumbnails: Array<{ url: string; base64Data: string; altText?: string }>;
 }) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!process.env.R2_BUCKET_NAME) {
     return { uploaded: 0, failed: params.thumbnails.length, skipped: true };
   }
 
@@ -206,11 +206,11 @@ export async function syncKnowledgeSourceImages(params: {
   knowledgeSourceId: string;
   images: ScrapedImage[];
 }) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!process.env.R2_BUCKET_NAME) {
     return {
       uploaded: 0,
       failed: params.images.length,
-      errors: ["Missing BLOB_READ_WRITE_TOKEN"],
+      errors: ["Missing R2 storage configuration"],
       skipped: true,
     };
   }
