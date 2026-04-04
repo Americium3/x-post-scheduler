@@ -9,280 +9,124 @@ import { useLocale } from "next-intl";
 
 interface ModelEntry {
   name: string;
+  id?: string; // API model ID (without provider prefix)
   developer: string;
   descZh: string;
   descEn: string;
-  tier: "fast" | "standard" | "premium";
+  tier: "fast" | "standard" | "premium" | "free";
   badge?: string;
+  price?: string; // estimated price per run, e.g. "$0.10"
 }
+
+const FREE_IMAGE_MODELS: ModelEntry[] = [
+  { name: "FLUX.2 Pro", id: "flux-2-pro", developer: "Black Forest Labs", descZh: "免费 · 高质量文生图 · 有速率限制", descEn: "Free · High-quality T2I · Rate limited", tier: "free", price: "$0" },
+  { name: "FLUX.2 Max", id: "flux-2-max", developer: "Black Forest Labs", descZh: "免费 · 最高质量 · 有速率限制", descEn: "Free · Maximum quality · Rate limited", tier: "free", price: "$0" },
+  { name: "FLUX.2 Flex", id: "flux-2-flex", developer: "Black Forest Labs", descZh: "免费 · 灵活风格 · 有速率限制", descEn: "Free · Flexible styles · Rate limited", tier: "free", price: "$0" },
+  { name: "FLUX.2 Klein 4B", id: "flux-2-klein-4b", developer: "Black Forest Labs", descZh: "免费 · 轻量快速 · 有速率限制", descEn: "Free · Lightweight · Rate limited", tier: "free", price: "$0" },
+  { name: "Seedream 4.5", id: "seedream-v4.5", developer: "ByteDance", descZh: "免费 · 中英双语 · 有速率限制 · 可能排队", descEn: "Free · Bilingual · Rate limited · May queue", tier: "free", price: "$0" },
+];
 
 const IMAGE_GENERATION_MODELS: ModelEntry[] = [
   {
     name: "Seedream 4.5",
+    id: "seedream-v4.5",
     developer: "ByteDance",
     descZh: "最新旗舰 · 原生中英双语 · 4K 超清",
     descEn: "Latest flagship · Native bilingual · 4K ultra-HD",
     tier: "standard",
+    price: "$0.40",
   },
   {
     name: "Seedream 4",
+    id: "seedream-v4",
     developer: "ByteDance",
     descZh: "高质量图像生成 · 中英双语",
     descEn: "High-quality image generation · Bilingual",
     tier: "fast",
+    price: "$0.40",
   },
   {
     name: "Dreamina 3.1",
+    id: "dreamina-v3.1/text-to-image",
     developer: "ByteDance",
     descZh: "高保真美学风格 · 艺术感强",
     descEn: "High-fidelity aesthetics · Artistic style",
     tier: "premium",
+    price: "$0.60",
   },
   {
     name: "Qwen Image",
+    id: "qwen-image/text-to-image",
     developer: "Alibaba",
     descZh: "20B 参数 · 中文文字渲染优秀",
     descEn: "20B parameters · Excellent Chinese text rendering",
     tier: "standard",
+    price: "$0.50",
   },
   {
     name: "Wan 2.6 Image",
+    id: "wan-2.6/text-to-image",
     developer: "Alibaba",
     descZh: "Wan 系列图片版 · 高分辨率",
     descEn: "Wan series image model · High resolution",
     tier: "fast",
+    price: "$0.80",
   },
 ];
 
 const IMAGE_EDITING_MODELS: ModelEntry[] = [
-  {
-    name: "FLUX Kontext Pro",
-    developer: "Black Forest Labs",
-    descZh: "上下文感知编辑 · 修图/修文字首选",
-    descEn: "Context-aware editing · Best for image & text editing",
-    tier: "premium",
-  },
-  {
-    name: "FLUX Kontext Pro Multi",
-    developer: "Black Forest Labs",
-    descZh: "多图上下文编辑 · 风格一致性",
-    descEn: "Multi-image context editing · Style consistency",
-    tier: "premium",
-  },
-  {
-    name: "UNO",
-    developer: "ByteDance",
-    descZh: "通用图像编辑 · 图文混合",
-    descEn: "Universal image editing · Image + text",
-    tier: "standard",
-  },
-  {
-    name: "Real-ESRGAN",
-    developer: "Xintao Wang et al.",
-    descZh: "图像超分辨率增强 · 画质提升",
-    descEn: "Image super-resolution · Quality enhancement",
-    tier: "fast",
-  },
+  { name: "FLUX Kontext Pro", id: "flux-kontext-pro", developer: "Black Forest Labs", descZh: "上下文感知编辑 · 修图/修文字首选", descEn: "Context-aware editing · Best for image & text editing", tier: "premium", price: "$0.80" },
+  { name: "FLUX Kontext Pro Multi", id: "flux-kontext-pro/multi", developer: "Black Forest Labs", descZh: "多图上下文编辑 · 风格一致性", descEn: "Multi-image context editing · Style consistency", tier: "premium", price: "$0.80" },
+  { name: "UNO", id: "uno", developer: "ByteDance", descZh: "通用图像编辑 · 图文混合", descEn: "Universal image editing · Image + text", tier: "standard", price: "$0.50" },
+  { name: "Real-ESRGAN", id: "real-esrgan", developer: "Xintao Wang et al.", descZh: "图像超分辨率增强 · 画质提升", descEn: "Image super-resolution · Quality enhancement", tier: "fast", price: "$0.50" },
 ];
 
 const VIDEO_T2V_MODELS: ModelEntry[] = [
-  {
-    name: "Wan 2.2 — 480p Ultra Fast",
-    developer: "Alibaba",
-    descZh: "极速生成 · 约 5 秒出片",
-    descEn: "Ultra-fast generation · ~5s per video",
-    tier: "fast",
-  },
-  {
-    name: "Wan 2.2 — 720p",
-    developer: "Alibaba",
-    descZh: "高清分辨率",
-    descEn: "High-definition resolution",
-    tier: "standard",
-  },
-  {
-    name: "Wan 2.6",
-    developer: "Alibaba",
-    descZh: "最新 Wan 系列 · 支持音频生成 · 最佳画质",
-    descEn: "Latest Wan series · Audio support · Best quality",
-    tier: "standard",
-    badge: "audio",
-  },
-  {
-    name: "Seedance 1.5 Pro",
-    developer: "ByteDance",
-    descZh: "电影级画质 · 支持音频生成",
-    descEn: "Cinematic quality · Audio support",
-    tier: "premium",
-    badge: "audio",
-  },
-  {
-    name: "Kling Video O3",
-    developer: "Kuaishou",
-    descZh: "最佳运动质量 · 动态效果一流",
-    descEn: "Best motion quality · Premium dynamics",
-    tier: "premium",
-  },
-  {
-    name: "Seedance 2.0",
-    developer: "ByteDance",
-    descZh: "最新 Seedance · 支持音频 + 锁定镜头 · 最长 12 秒",
-    descEn: "Latest Seedance · Audio + lock camera · Up to 12s",
-    tier: "premium",
-    badge: "audio",
-  },
+  { name: "Wan 2.2 — 480p Ultra Fast", id: "wan-2.2/t2v-480p-ultra-fast", developer: "Alibaba", descZh: "极速生成 · 约 5 秒出片", descEn: "Ultra-fast generation · ~5s per video", tier: "fast", price: "$0.10" },
+  { name: "Wan 2.2 — 720p", id: "wan-2.2/t2v-720p", developer: "Alibaba", descZh: "高清分辨率", descEn: "High-definition resolution", tier: "standard", price: "$0.60" },
+  { name: "Wan 2.6", id: "wan-2.6/text-to-video", developer: "Alibaba", descZh: "最新 Wan 系列 · 支持音频生成", descEn: "Latest Wan series · Audio support", tier: "standard", badge: "audio", price: "$0.80" },
+  { name: "Seedance 1.5 Pro", id: "seedance-v1.5-pro/text-to-video", developer: "ByteDance", descZh: "电影级画质 · 支持音频", descEn: "Cinematic quality · Audio support", tier: "premium", badge: "audio", price: "$1.00" },
+  { name: "Kling Video O3", id: "kling-video-o3-std/text-to-video", developer: "Kuaishou", descZh: "最佳运动质量", descEn: "Best motion quality", tier: "premium", price: "$1.20" },
+  { name: "Seedance 2.0", id: "seedance-2.0/text-to-video", developer: "ByteDance", descZh: "最新 · 音频 + 锁定镜头 · 最长 12s", descEn: "Latest · Audio + lock camera · Up to 12s", tier: "premium", badge: "audio", price: "$1.20" },
 ];
 
 const VIDEO_I2V_MODELS: ModelEntry[] = [
-  {
-    name: "Wan 2.2 i2v — 480p Fast",
-    developer: "Alibaba",
-    descZh: "图片转视频 · 快速生成",
-    descEn: "Image-to-video · Fast generation",
-    tier: "fast",
-  },
-  {
-    name: "Wan 2.2 i2v — 720p",
-    developer: "Alibaba",
-    descZh: "图片转视频 · 高清",
-    descEn: "Image-to-video · HD resolution",
-    tier: "standard",
-  },
-  {
-    name: "Seedance 1.5 Pro i2v",
-    developer: "ByteDance",
-    descZh: "图片转视频 · 电影级 · 支持音频",
-    descEn: "Image-to-video · Cinematic · Audio support",
-    tier: "premium",
-    badge: "audio",
-  },
-  {
-    name: "Seedance 2.0 i2v",
-    developer: "ByteDance",
-    descZh: "图片转视频 · 最新 Seedance · 支持音频 + 锁定镜头 · 最长 12 秒",
-    descEn: "Image-to-video · Latest Seedance · Audio + lock camera · Up to 12s",
-    tier: "premium",
-    badge: "audio",
-  },
+  { name: "Wan 2.2 i2v — 480p Fast", id: "wan-2.2/i2v-480p-ultra-fast", developer: "Alibaba", descZh: "图片转视频 · 快速", descEn: "Image-to-video · Fast", tier: "fast", price: "$0.10" },
+  { name: "Wan 2.2 i2v — 720p", id: "wan-2.2/i2v-720p", developer: "Alibaba", descZh: "图片转视频 · 高清", descEn: "Image-to-video · HD", tier: "standard", price: "$0.60" },
+  { name: "Seedance 1.5 Pro i2v", id: "seedance-v1.5-pro/image-to-video", developer: "ByteDance", descZh: "图片转视频 · 电影级 · 音频", descEn: "Image-to-video · Cinematic · Audio", tier: "premium", badge: "audio", price: "$1.00" },
+  { name: "Seedance 2.0 i2v", id: "seedance-2.0/image-to-video", developer: "ByteDance", descZh: "图片转视频 · 音频 + 锁定镜头 · 12s", descEn: "Image-to-video · Audio + lock camera · 12s", tier: "premium", badge: "audio", price: "$1.20" },
 ];
 
 const TEXT_GENERATION_MODELS: ModelEntry[] = [
-  {
-    name: "GPT-4o",
-    developer: "OpenAI",
-    descZh: "旗舰级 · 综合能力最强",
-    descEn: "Flagship · Most capable overall",
-    tier: "premium",
-  },
-  {
-    name: "GPT-4o Mini",
-    developer: "OpenAI",
-    descZh: "轻量快速 · 性价比高",
-    descEn: "Lightweight · Cost-effective",
-    tier: "fast",
-  },
-  {
-    name: "GPT-5",
-    developer: "OpenAI",
-    descZh: "最新旗舰模型",
-    descEn: "Latest flagship model",
-    tier: "premium",
-  },
-  {
-    name: "Claude Sonnet 4",
-    developer: "Anthropic",
-    descZh: "出色的写作质量",
-    descEn: "Excellent writing quality",
-    tier: "premium",
-  },
-  {
-    name: "Claude 3.5 Haiku",
-    developer: "Anthropic",
-    descZh: "快速 · 高性价比",
-    descEn: "Fast · Cost-efficient",
-    tier: "fast",
-  },
-  {
-    name: "Gemini 2.5 Flash",
-    developer: "Google",
-    descZh: "极速 · 低成本",
-    descEn: "Ultra-fast · Low cost",
-    tier: "fast",
-  },
-  {
-    name: "Gemini 2.5 Pro",
-    developer: "Google",
-    descZh: "高性能推理",
-    descEn: "High performance reasoning",
-    tier: "premium",
-  },
-  {
-    name: "Grok 3",
-    developer: "xAI",
-    descZh: "实时感知 · 紧跟热点",
-    descEn: "Real-time aware",
-    tier: "premium",
-  },
-  {
-    name: "Grok 3 Mini",
-    developer: "xAI",
-    descZh: "轻量快速",
-    descEn: "Lightweight and fast",
-    tier: "fast",
-  },
-  {
-    name: "Mistral Small",
-    developer: "Mistral",
-    descZh: "高效欧洲模型",
-    descEn: "Efficient European model",
-    tier: "fast",
-  },
-  {
-    name: "Mistral Medium",
-    developer: "Mistral",
-    descZh: "均衡性能",
-    descEn: "Balanced performance",
-    tier: "standard",
-  },
+  { name: "GPT-4o", id: "openai/gpt-4o", developer: "OpenAI", descZh: "旗舰级 · 综合能力最强", descEn: "Flagship · Most capable overall", tier: "premium", price: "$2.50/1M in · $10/1M out" },
+  { name: "GPT-4o Mini", id: "openai/gpt-4o-mini", developer: "OpenAI", descZh: "轻量快速 · 性价比高", descEn: "Lightweight · Cost-effective", tier: "fast", price: "$0.15/1M in · $0.60/1M out" },
+  { name: "GPT-5", id: "openai/gpt-5", developer: "OpenAI", descZh: "最新旗舰模型", descEn: "Latest flagship model", tier: "premium", price: "$1.25/1M in · $10/1M out" },
+  { name: "Claude Sonnet 4", id: "anthropic/claude-sonnet-4", developer: "Anthropic", descZh: "出色的写作质量", descEn: "Excellent writing quality", tier: "premium", price: "$3/1M in · $15/1M out" },
+  { name: "Claude 3.5 Haiku", id: "anthropic/claude-3.5-haiku", developer: "Anthropic", descZh: "快速 · 高性价比", descEn: "Fast · Cost-efficient", tier: "fast", price: "$0.80/1M in · $4/1M out" },
+  { name: "Gemini 2.5 Flash", id: "google/gemini-2.5-flash", developer: "Google", descZh: "极速 · 低成本", descEn: "Ultra-fast · Low cost", tier: "fast", price: "$0.30/1M in · $2.50/1M out" },
+  { name: "Gemini 2.5 Pro", id: "google/gemini-2.5-pro", developer: "Google", descZh: "高性能推理", descEn: "High performance reasoning", tier: "premium", price: "$1.25/1M in · $10/1M out" },
+  { name: "Grok 3", id: "xai/grok-3", developer: "xAI", descZh: "实时感知 · 紧跟热点", descEn: "Real-time aware", tier: "premium", price: "$3/1M in · $15/1M out" },
+  { name: "Grok 3 Mini", id: "xai/grok-3-mini", developer: "xAI", descZh: "轻量快速", descEn: "Lightweight and fast", tier: "fast", price: "$0.30/1M in · $0.50/1M out" },
+  { name: "Mistral Small", id: "mistral/mistral-small", developer: "Mistral", descZh: "高效欧洲模型", descEn: "Efficient European model", tier: "fast", price: "$0.10/1M in · $0.30/1M out" },
+  { name: "Mistral Medium", id: "mistral/mistral-medium", developer: "Mistral", descZh: "均衡性能", descEn: "Balanced performance", tier: "standard", price: "$0.40/1M in · $2/1M out" },
 ];
 
 const VOICE_MODELS: ModelEntry[] = [
-  {
-    name: "TTS-1",
-    developer: "OpenAI",
-    descZh: "高品质文字转语音 · 6 种音色",
-    descEn: "High-quality text-to-speech · 6 voice options",
-    tier: "standard",
-  },
+  { name: "TTS-1", id: "openai/tts-1", developer: "OpenAI", descZh: "高品质文字转语音 · 6 种音色 (alloy, echo, fable, onyx, nova, shimmer)", descEn: "High-quality TTS · 6 voices (alloy, echo, fable, onyx, nova, shimmer)", tier: "standard" },
 ];
 
 const BGM_MODELS: ModelEntry[] = [
-  {
-    name: "MMAudio V2",
-    developer: "Cheng et al.",
-    descZh: "视频转音频 · 多模态同步 · 高质量背景音乐生成",
-    descEn: "Video-to-audio · Multimodal sync · High-quality BGM generation",
-    tier: "standard",
-  },
+  { name: "MMAudio V2", id: "mmaudio-v2", developer: "Cheng et al.", descZh: "视频转音频 · 多模态同步 · 背景音乐生成", descEn: "Video-to-audio · Multimodal sync · BGM generation", tier: "standard" },
 ];
 
 const NARRATION_MODELS: ModelEntry[] = [
-  {
-    name: "Gemini 2.5 Flash",
-    developer: "Google",
-    descZh: "视频内容分析 · 自动生成旁白脚本",
-    descEn: "Video content analysis · Auto-generate narration scripts",
-    tier: "fast",
-    badge: "analysis",
-  },
-  {
-    name: "TTS-1",
-    developer: "OpenAI",
-    descZh: "旁白语音合成 · 6 种音色",
-    descEn: "Narration voice synthesis · 6 voice options",
-    tier: "standard",
-    badge: "synthesis",
-  },
+  { name: "Gemini 2.5 Flash", id: "google/gemini-2.5-flash", developer: "Google", descZh: "视频内容分析 · 自动生成旁白脚本", descEn: "Video analysis · Auto-generate narration", tier: "fast", badge: "analysis" },
+  { name: "TTS-1", id: "openai/tts-1", developer: "OpenAI", descZh: "旁白语音合成 · 6 种音色", descEn: "Narration synthesis · 6 voices", tier: "standard", badge: "synthesis" },
+];
+
+const POST_PRODUCTION_MODELS: ModelEntry[] = [
+  { name: "SAM2 Video", id: "meta/sam-2-video", developer: "Meta", descZh: "视频目标跟踪 · 点击即跟踪 · 内容替换", descEn: "Video object tracking · Click to track · Content replacement", tier: "standard", price: "~$0.04/run" },
+  { name: "Wan 2.7 VideoEdit", id: "wan-2.7-videoedit", developer: "Alibaba", descZh: "自然语言视频编辑 · AI 智能修改", descEn: "Natural language video editing · AI smart modification", tier: "premium", price: "~$0.50/run" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -293,6 +137,12 @@ const TIER_STYLES: Record<
   string,
   { bg: string; text: string; labelZh: string; labelEn: string }
 > = {
+  free: {
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+    text: "text-emerald-700 dark:text-emerald-400",
+    labelZh: "免费",
+    labelEn: "Free",
+  },
   fast: {
     bg: "bg-green-100 dark:bg-green-900/30",
     text: "text-green-700 dark:text-green-400",
@@ -351,6 +201,12 @@ function ModelTable({
             <th className="text-left py-2 pr-4 font-semibold text-gray-900 dark:text-white">
               {locale === "zh" ? "说明" : "Description"}
             </th>
+            <th className="text-left py-2 pr-4 font-semibold text-gray-900 dark:text-white hidden sm:table-cell">
+              {locale === "zh" ? "模型 ID" : "Model ID"}
+            </th>
+            <th className="text-left py-2 pr-4 font-semibold text-gray-900 dark:text-white">
+              {locale === "zh" ? "价格" : "Price"}
+            </th>
             <th className="text-left py-2 font-semibold text-gray-900 dark:text-white">
               {locale === "zh" ? "等级" : "Tier"}
             </th>
@@ -372,6 +228,12 @@ function ModelTable({
               </td>
               <td className="py-2.5 pr-4 text-gray-600 dark:text-gray-400">
                 {locale === "zh" ? m.descZh : m.descEn}
+              </td>
+              <td className="py-2.5 pr-4 text-gray-500 dark:text-gray-400 font-mono text-xs hidden sm:table-cell">
+                {m.id ?? "-"}
+              </td>
+              <td className="py-2.5 pr-4 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                {m.price ?? "-"}
               </td>
               <td className="py-2.5">
                 <TierBadge tier={m.tier} locale={locale} />
@@ -547,6 +409,27 @@ export default function ModelsDocsPage() {
           <div className="flex items-center gap-2 mb-4">
             <span className="text-xl">🖼️</span>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              {locale === "zh" ? "免费图像模型" : "Free Image Models"}
+            </h2>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {locale === "zh"
+              ? "零成本使用顶级 AI 图像模型，无需付费。"
+              : "Use top AI image models at zero cost. No credits needed."}
+          </p>
+          <ModelTable models={FREE_IMAGE_MODELS} locale={locale} />
+          <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-700 dark:text-amber-400">
+            {locale === "zh"
+              ? "免费模型存在速率限制（约 10 次/分钟），高峰期可能排队等待。如需更快速度和更高稳定性，请使用付费模型。"
+              : "Free models have rate limits (~10 req/min) and may queue during peak hours. For faster speed and higher reliability, use paid models."}
+          </div>
+        </section>
+
+        {/* Image Generation (Paid) */}
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🖼️</span>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {locale === "zh" ? "图像生成模型" : "Image Generation Models"}
             </h2>
           </div>
@@ -706,6 +589,22 @@ export default function ModelsDocsPage() {
               </>
             )}
           </div>
+        </section>
+
+        {/* Post-Production */}
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🎨</span>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              {locale === "zh" ? "后期制作模型" : "Post-Production Models"}
+            </h2>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {locale === "zh"
+              ? "视频后期处理工具 — 目标跟踪、内容替换和自然语言编辑。"
+              : "Video post-processing tools — object tracking, content replacement, and natural language editing."}
+          </p>
+          <ModelTable models={POST_PRODUCTION_MODELS} locale={locale} />
         </section>
 
         {/* Tier explanation */}

@@ -38,6 +38,137 @@ export default async function ChangelogPage({
         {/* Timeline */}
         <div className="space-y-8">
 
+          {/* 2026-04 Weekly Product Update */}
+          <div className="relative pl-8 pb-8 border-l-2 border-purple-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-purple-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                  {isZh ? "产品更新" : "Product Update"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年4月4日" : "April 4, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "xPilot Media Studio 全面升级"
+                  : "xPilot Media Studio — Major Upgrade"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      本周我们对 xPilot 进行了全面升级，带来全新的 Media Studio 工作区、后台任务系统、后期制作工具等多项重要更新。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">全新 Media Studio 工作区</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      我们重新设计了内容创作中心，将所有创作工具整合到统一的 Media Studio 下：
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>视频生成</strong> — AI 视频生成、视频拼接、长视频任务</li>
+                      <li><strong>图片生成</strong> — 多款 AI 模型，支持文生图、图生图</li>
+                      <li><strong>帖子创作</strong> — 社交媒体帖子编写与调度</li>
+                      <li><strong>作品展示</strong> — 社区作品浏览、发布与管理</li>
+                      <li><strong>素材管理</strong> — 统一查看所有任务状态与历史素材</li>
+                      <li><strong>后期制作</strong> — 文字叠加、遮罩、智能跟踪、AI 编辑</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">后台无人值守视频生成</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      提交视频生成任务后，您可以立即关闭页面。系统会在后台自动完成处理，并将结果保存到您的素材库中。
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>每 2 分钟自动检查任务进度</li>
+                      <li>完成后自动保存到 Cloudflare R2 云存储</li>
+                      <li>在素材管理中查看进度条和预估时间</li>
+                      <li>支持任务重试</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">后期制作工具</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      全新后期制作工具让您无需离开平台即可完善 AI 生成的视频：
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>文字叠加</strong> — 添加中文标题、字幕，支持多种字体和样式</li>
+                      <li><strong>区域遮罩</strong> — 框选区域进行模糊或颜色填充</li>
+                      <li><strong>SAM2 智能跟踪</strong> — 点击目标即可全视频自动跟踪，支持内容替换</li>
+                      <li><strong>AI 智能编辑</strong> — 用自然语言描述修改需求（由 Wan 2.7 VideoEdit 驱动）</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">多语言支持</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot 现已支持五种语言：English、中文、Español、日本語、한국어。您可以在设置页面或左下角语言切换器中更改。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">其他改进</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>视频生成成本降低 — 费率乘数从 5x 调整为 2x</li>
+                      <li>BytePluses API 集成 — Seedance 1.5 Pro 优先使用 BytePluses 通道</li>
+                      <li>侧边栏导航优化 — 更清晰的层级结构与活跃状态指示</li>
+                      <li>作品详情页两栏布局 — 视频预览 + 参数信息并排显示</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      This week we shipped a major upgrade to xPilot, including a redesigned Media Studio workspace, background task processing, post-production tools, and more.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">New Media Studio Workspace</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      All creative tools are now organized under a unified Media Studio hub:
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Video</strong> — AI video generation, stitching, and long-form video jobs</li>
+                      <li><strong>Images</strong> — Multiple AI models for text-to-image and image-to-image</li>
+                      <li><strong>Posts</strong> — Compose and schedule social media posts</li>
+                      <li><strong>Gallery</strong> — Browse community works, publish and manage your creations</li>
+                      <li><strong>Materials</strong> — Unified view of all task statuses and generated assets</li>
+                      <li><strong>Post Production</strong> — Text overlay, masking, smart tracking, and AI editing</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Background Video Processing</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      Submit a video generation task and close the page — the system handles everything automatically.
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>Tasks are polled every 2 minutes automatically</li>
+                      <li>Completed videos are saved to Cloudflare R2 cloud storage</li>
+                      <li>Track progress with live progress bars and time estimates</li>
+                      <li>Retry failed tasks with one click</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Post-Production Tools</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      New post-production tools let you refine AI-generated videos without leaving the platform:
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Text Overlay</strong> — Add titles and subtitles with Chinese font support</li>
+                      <li><strong>Area Masking</strong> — Select regions to blur or fill with solid color</li>
+                      <li><strong>SAM2 Smart Tracking</strong> — Click to track objects across all frames, with content replacement</li>
+                      <li><strong>AI Smart Edit</strong> — Describe changes in natural language (powered by Wan 2.7 VideoEdit)</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Multi-Language Support</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot now supports five languages: English, Chinese, Spanish, Japanese, and Korean. Switch in Settings or via the language selector.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Other Improvements</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>Video generation costs reduced — pricing multiplier lowered from 5x to 2x</li>
+                      <li>BytePluses API integration — Seedance 1.5 Pro now routes through BytePluses with Wavespeed fallback</li>
+                      <li>Sidebar navigation redesigned with clearer hierarchy and active state indicators</li>
+                      <li>Gallery detail page now uses a two-column layout for better readability</li>
+                    </ul>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* 2026-04 Storage Migration & Data Loss Notice */}
           <div className="relative pl-8 pb-8 border-l-2 border-red-500">
             <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-red-500"></div>
