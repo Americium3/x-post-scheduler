@@ -98,17 +98,17 @@ const VIDEO_I2V_MODELS: ModelEntry[] = [
 ];
 
 const TEXT_GENERATION_MODELS: ModelEntry[] = [
-  { name: "GPT-4o", id: "openai/gpt-4o", developer: "OpenAI", descZh: "旗舰级 · 综合能力最强", descEn: "Flagship · Most capable overall", tier: "premium", price: "$2.50/1M in · $10/1M out" },
-  { name: "GPT-4o Mini", id: "openai/gpt-4o-mini", developer: "OpenAI", descZh: "轻量快速 · 性价比高", descEn: "Lightweight · Cost-effective", tier: "fast", price: "$0.15/1M in · $0.60/1M out" },
-  { name: "GPT-5", id: "openai/gpt-5", developer: "OpenAI", descZh: "最新旗舰模型", descEn: "Latest flagship model", tier: "premium", price: "$1.25/1M in · $10/1M out" },
-  { name: "Claude Sonnet 4", id: "anthropic/claude-sonnet-4", developer: "Anthropic", descZh: "出色的写作质量", descEn: "Excellent writing quality", tier: "premium", price: "$3/1M in · $15/1M out" },
-  { name: "Claude 3.5 Haiku", id: "anthropic/claude-3.5-haiku", developer: "Anthropic", descZh: "快速 · 高性价比", descEn: "Fast · Cost-efficient", tier: "fast", price: "$0.80/1M in · $4/1M out" },
-  { name: "Gemini 2.5 Flash", id: "google/gemini-2.5-flash", developer: "Google", descZh: "极速 · 低成本", descEn: "Ultra-fast · Low cost", tier: "fast", price: "$0.30/1M in · $2.50/1M out" },
-  { name: "Gemini 2.5 Pro", id: "google/gemini-2.5-pro", developer: "Google", descZh: "高性能推理", descEn: "High performance reasoning", tier: "premium", price: "$1.25/1M in · $10/1M out" },
-  { name: "Grok 3", id: "xai/grok-3", developer: "xAI", descZh: "实时感知 · 紧跟热点", descEn: "Real-time aware", tier: "premium", price: "$3/1M in · $15/1M out" },
-  { name: "Grok 3 Mini", id: "xai/grok-3-mini", developer: "xAI", descZh: "轻量快速", descEn: "Lightweight and fast", tier: "fast", price: "$0.30/1M in · $0.50/1M out" },
-  { name: "Mistral Small", id: "mistral/mistral-small", developer: "Mistral", descZh: "高效欧洲模型", descEn: "Efficient European model", tier: "fast", price: "$0.10/1M in · $0.30/1M out" },
-  { name: "Mistral Medium", id: "mistral/mistral-medium", developer: "Mistral", descZh: "均衡性能", descEn: "Balanced performance", tier: "standard", price: "$0.40/1M in · $2/1M out" },
+  { name: "GPT-4o", id: "openai/gpt-4o", developer: "OpenAI", descZh: "旗舰级 · 综合能力最强", descEn: "Flagship · Most capable overall", tier: "premium", price: "$12.50/1M in · $50/1M out" },
+  { name: "GPT-4o Mini", id: "openai/gpt-4o-mini", developer: "OpenAI", descZh: "轻量快速 · 性价比高", descEn: "Lightweight · Cost-effective", tier: "fast", price: "$0.75/1M in · $3/1M out" },
+  { name: "GPT-5", id: "openai/gpt-5", developer: "OpenAI", descZh: "最新旗舰模型", descEn: "Latest flagship model", tier: "premium", price: "$6.25/1M in · $50/1M out" },
+  { name: "Claude Sonnet 4", id: "anthropic/claude-sonnet-4", developer: "Anthropic", descZh: "出色的写作质量", descEn: "Excellent writing quality", tier: "premium", price: "$15/1M in · $75/1M out" },
+  { name: "Claude 3.5 Haiku", id: "anthropic/claude-3.5-haiku", developer: "Anthropic", descZh: "快速 · 高性价比", descEn: "Fast · Cost-efficient", tier: "fast", price: "$4/1M in · $20/1M out" },
+  { name: "Gemini 2.5 Flash", id: "google/gemini-2.5-flash", developer: "Google", descZh: "极速 · 低成本", descEn: "Ultra-fast · Low cost", tier: "fast", price: "$1.50/1M in · $12.50/1M out" },
+  { name: "Gemini 2.5 Pro", id: "google/gemini-2.5-pro", developer: "Google", descZh: "高性能推理", descEn: "High performance reasoning", tier: "premium", price: "$6.25/1M in · $50/1M out" },
+  { name: "Grok 3", id: "xai/grok-3", developer: "xAI", descZh: "实时感知 · 紧跟热点", descEn: "Real-time aware", tier: "premium", price: "$15/1M in · $75/1M out" },
+  { name: "Grok 3 Mini", id: "xai/grok-3-mini", developer: "xAI", descZh: "轻量快速", descEn: "Lightweight and fast", tier: "fast", price: "$1.50/1M in · $2.50/1M out" },
+  { name: "Mistral Small", id: "mistral/mistral-small", developer: "Mistral", descZh: "高效欧洲模型", descEn: "Efficient European model", tier: "fast", price: "$0.50/1M in · $1.50/1M out" },
+  { name: "Mistral Medium", id: "mistral/mistral-medium", developer: "Mistral", descZh: "均衡性能", descEn: "Balanced performance", tier: "standard", price: "$2/1M in · $10/1M out" },
 ];
 
 const VOICE_MODELS: ModelEntry[] = [
