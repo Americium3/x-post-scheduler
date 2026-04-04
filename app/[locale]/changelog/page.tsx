@@ -38,6 +38,89 @@ export default async function ChangelogPage({
         {/* Timeline */}
         <div className="space-y-8">
 
+          {/* 2026-04 MCP Support */}
+          <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                  {isZh ? "新功能" : "New Feature"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年4月4日" : "April 4, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "xPilot 现已支持 MCP 协议"
+                  : "xPilot Now Supports MCP (Model Context Protocol)"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot 现已支持 MCP (Model Context Protocol)，您可以直接在 Claude Desktop、Claude Code 等 AI 工具中调用 xPilot 的全部 AI 能力 — 无需离开您的工作流。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">什么是 MCP？</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      MCP (Model Context Protocol) 是由 Anthropic 推出的开放协议，让 AI 助手能够连接外部工具和数据源。通过 MCP，您可以在对话中直接让 AI 帮您生成图片、视频和社交媒体帖子。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">可用工具</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>list_models</strong> — 查看所有可用 AI 模型（49 款模型，13 款免费）</li>
+                      <li><strong>generate_image</strong> — AI 文生图（支持 FLUX、Seedream 等免费模型）</li>
+                      <li><strong>generate_video</strong> — AI 文生视频/图生视频（Seedance、Wan、Kling）</li>
+                      <li><strong>generate_post</strong> — AI 生成社交媒体帖子</li>
+                      <li><strong>check_task</strong> — 查询生成任务状态</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">两种连接方式</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Next.js 端点</strong> — <code className="text-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">https://xpilot.jytech.us/api/mcp</code></li>
+                      <li><strong>Cloudflare Worker</strong> — 全球边缘部署，更快响应，需 API Key 认证</li>
+                    </ul>
+
+                    <p className="text-gray-700 dark:text-gray-300">
+                      <Link href={`/${locale}/docs/mcp`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">查看 MCP 接入文档 →</Link>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot now supports MCP (Model Context Protocol), allowing you to use xPilot&apos;s full AI capabilities directly from Claude Desktop, Claude Code, and other MCP-compatible AI tools — without leaving your workflow.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">What is MCP?</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      MCP (Model Context Protocol) is an open protocol by Anthropic that lets AI assistants connect to external tools and data sources. With MCP, you can ask AI to generate images, videos, and social media posts in a conversation.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Available Tools</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>list_models</strong> — Browse all available AI models (49 models, 13 free)</li>
+                      <li><strong>generate_image</strong> — AI text-to-image (free FLUX, Seedream models)</li>
+                      <li><strong>generate_video</strong> — AI text-to-video & image-to-video (Seedance, Wan, Kling)</li>
+                      <li><strong>generate_post</strong> — AI social media post generation</li>
+                      <li><strong>check_task</strong> — Check generation task status</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Two Connection Options</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Next.js Endpoint</strong> — <code className="text-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">https://xpilot.jytech.us/api/mcp</code></li>
+                      <li><strong>Cloudflare Worker</strong> — Edge-deployed globally, faster response, requires API Key</li>
+                    </ul>
+
+                    <p className="text-gray-700 dark:text-gray-300">
+                      <Link href="/docs/mcp" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Read the MCP setup guide →</Link>
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* 2026-04 Weekly Product Update */}
           <div className="relative pl-8 pb-8 border-l-2 border-purple-500">
             <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-purple-500"></div>

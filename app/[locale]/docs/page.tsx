@@ -11,6 +11,12 @@ export default function DocsPage() {
             </h1>
             <div className="flex gap-3">
               <Link
+                href="/docs/mcp"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                MCP →
+              </Link>
+              <Link
                 href="/docs/api"
                 className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
