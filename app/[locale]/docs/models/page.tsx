@@ -97,6 +97,17 @@ const VIDEO_I2V_MODELS: ModelEntry[] = [
   { name: "Seedance 2.0 i2v", id: "seedance-2.0/image-to-video", developer: "ByteDance", descZh: "图片转视频 · 音频 + 锁定镜头 · 12s", descEn: "Image-to-video · Audio + lock camera · 12s", tier: "premium", badge: "audio", price: "$1.20" },
 ];
 
+const FREE_TEXT_MODELS: ModelEntry[] = [
+  { name: "GPT-OSS 120B", id: "gpt-oss-120b", developer: "OpenAI", descZh: "免费 · 120B 开源 · 有速率限制", descEn: "Free · 120B open-source · Rate limited", tier: "free", price: "$0" },
+  { name: "Nemotron 3 Super", id: "nemotron-3-super", developer: "NVIDIA", descZh: "免费 · 543B · 有速率限制", descEn: "Free · 543B · Rate limited", tier: "free", price: "$0" },
+  { name: "Qwen3 Coder 480B", id: "qwen3-coder-480b", developer: "Qwen", descZh: "免费 · 480B 编程专用 · 有速率限制", descEn: "Free · 480B coding · Rate limited", tier: "free", price: "$0" },
+  { name: "Llama 3.3 70B", id: "llama-3.3-70b-instruct", developer: "Meta", descZh: "免费 · 70B · 有速率限制", descEn: "Free · 70B · Rate limited", tier: "free", price: "$0" },
+  { name: "Gemma 3 27B", id: "gemma-3-27b-it", developer: "Google", descZh: "免费 · 27B · 有速率限制", descEn: "Free · 27B · Rate limited", tier: "free", price: "$0" },
+  { name: "Mistral Small 3.1 24B", id: "mistral-small-3.1-24b", developer: "Mistral", descZh: "免费 · 24B · 有速率限制", descEn: "Free · 24B · Rate limited", tier: "free", price: "$0" },
+  { name: "DeepSeek V3", id: "deepseek-chat-v3", developer: "DeepSeek", descZh: "免费 · 高质量中文 · 有速率限制", descEn: "Free · Great for Chinese · Rate limited", tier: "free", price: "$0" },
+  { name: "Hermes 3 405B", id: "hermes-3-llama-3.1-405b", developer: "Nous Research", descZh: "免费 · 405B · 有速率限制", descEn: "Free · 405B · Rate limited", tier: "free", price: "$0" },
+];
+
 const TEXT_GENERATION_MODELS: ModelEntry[] = [
   { name: "GPT-4o", id: "openai/gpt-4o", developer: "OpenAI", descZh: "旗舰级 · 综合能力最强", descEn: "Flagship · Most capable overall", tier: "premium", price: "$12.50/1M in · $50/1M out" },
   { name: "GPT-4o Mini", id: "openai/gpt-4o-mini", developer: "OpenAI", descZh: "轻量快速 · 性价比高", descEn: "Lightweight · Cost-effective", tier: "fast", price: "$0.75/1M in · $3/1M out" },
@@ -180,6 +191,30 @@ const BADGE_STYLES: Record<string, { bg: string; text: string; zh: string; en: s
   synthesis: { bg: "bg-teal-100 dark:bg-teal-900/30",    text: "text-teal-700 dark:text-teal-400",     zh: "合成",  en: "Synthesis" },
 };
 
+function ModelCard({ m, locale }: { m: ModelEntry; locale: string }) {
+  return (
+    <div className="p-3 rounded-lg border border-gray-100 dark:border-gray-700 space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium text-gray-900 dark:text-white text-sm">
+          {m.name}
+          {m.badge && BADGE_STYLES[m.badge] && (
+            <span className={`ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${BADGE_STYLES[m.badge].bg} ${BADGE_STYLES[m.badge].text}`}>
+              {locale === "zh" ? BADGE_STYLES[m.badge].zh : BADGE_STYLES[m.badge].en}
+            </span>
+          )}
+        </span>
+        <TierBadge tier={m.tier} locale={locale} />
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{m.developer}</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400">{locale === "zh" ? m.descZh : m.descEn}</p>
+      <div className="flex items-center gap-3 pt-1">
+        {m.id && <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{m.id}</span>}
+        {m.price && <span className="text-[10px] text-gray-500 ml-auto">{m.price}</span>}
+      </div>
+    </div>
+  );
+}
+
 function ModelTable({
   models,
   locale,
@@ -188,7 +223,13 @@ function ModelTable({
   locale: string;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <>
+    {/* Mobile: Card layout */}
+    <div className="sm:hidden space-y-2">
+      {models.map((m) => <ModelCard key={m.name} m={m} locale={locale} />)}
+    </div>
+    {/* Desktop: Table layout */}
+    <div className="hidden sm:block overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -243,6 +284,7 @@ function ModelTable({
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 
@@ -353,7 +395,13 @@ export default function ModelsDocsPage() {
                   : "Learn about the AI models and their developers on our platform"}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-semibold">
+                49 {locale === "zh" ? "个模型" : "Models"}
+              </span>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+                13 {locale === "zh" ? "个免费" : "Free"}
+              </span>
               <Link
                 href={`/${locale}/docs`}
                 className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
@@ -372,6 +420,24 @@ export default function ModelsDocsPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+        {/* Model stats overview */}
+        <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 sm:gap-3">
+          {[
+            { num: "49", zh: "AI 模型", en: "AI Models", color: "text-blue-600 dark:text-blue-400" },
+            { num: "13", zh: "免费模型", en: "Free", color: "text-emerald-600 dark:text-emerald-400" },
+            { num: "14", zh: "图像", en: "Image", color: "text-sky-600 dark:text-sky-400" },
+            { num: "10", zh: "视频", en: "Video", color: "text-purple-600 dark:text-purple-400" },
+            { num: "19", zh: "文字", en: "Text", color: "text-amber-600 dark:text-amber-400" },
+            { num: "4", zh: "音频", en: "Audio", color: "text-rose-600 dark:text-rose-400" },
+            { num: "2", zh: "后期制作", en: "Post-Prod", color: "text-orange-600 dark:text-orange-400" },
+          ].map((s) => (
+            <div key={s.en} className="bg-white dark:bg-gray-800 rounded-xl p-3 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+              <p className={`text-2xl sm:text-3xl font-bold ${s.color}`}>{s.num}</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{locale === "zh" ? s.zh : s.en}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Developer overview */}
         <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
@@ -493,7 +559,28 @@ export default function ModelsDocsPage() {
           <ModelTable models={VIDEO_I2V_MODELS} locale={locale} />
         </section>
 
-        {/* Text Generation */}
+        {/* Free Text Models */}
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🆓</span>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              {locale === "zh" ? "免费文字模型" : "Free Text Models"}
+            </h2>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {locale === "zh"
+              ? "零成本使用多款顶级 AI 大语言模型，无需付费。"
+              : "Use top AI language models at zero cost. No credits needed."}
+          </p>
+          <ModelTable models={FREE_TEXT_MODELS} locale={locale} />
+          <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-700 dark:text-amber-400">
+            {locale === "zh"
+              ? "免费模型存在速率限制（约 10 次/分钟），高峰期可能排队等待。如需更快速度和更高稳定性，请使用付费模型。"
+              : "Free models have rate limits (~10 req/min) and may queue during peak hours. For faster speed and higher reliability, use paid models."}
+          </div>
+        </section>
+
+        {/* Text Generation (Paid) */}
         <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-xl">📝</span>
@@ -612,31 +699,20 @@ export default function ModelsDocsPage() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
             {locale === "zh" ? "模型等级说明" : "Model Tier Guide"}
           </h2>
-          <div className="space-y-3 text-sm">
-            <div className="flex items-start gap-3">
-              <TierBadge tier="fast" locale={locale} />
-              <p className="text-gray-600 dark:text-gray-400">
-                {locale === "zh"
-                  ? "生成速度最快，费用最低，适合快速迭代和日常使用。"
-                  : "Fastest generation, lowest cost. Ideal for quick iteration and daily use."}
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <TierBadge tier="standard" locale={locale} />
-              <p className="text-gray-600 dark:text-gray-400">
-                {locale === "zh"
-                  ? "速度与质量的最佳平衡，推荐大多数场景使用。"
-                  : "Best balance of speed and quality. Recommended for most use cases."}
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <TierBadge tier="premium" locale={locale} />
-              <p className="text-gray-600 dark:text-gray-400">
-                {locale === "zh"
-                  ? "最高质量输出，适合专业创作和重要内容发布。"
-                  : "Highest quality output. Best for professional work and important content."}
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { tier: "free" as const, zh: "零成本使用，有速率限制，高峰期可能排队。", en: "Zero cost with rate limits. May queue during peak hours." },
+              { tier: "fast" as const, zh: "生成速度最快，费用最低，适合快速迭代和日常使用。", en: "Fastest generation, lowest cost. Ideal for quick iteration." },
+              { tier: "standard" as const, zh: "速度与质量的最佳平衡，推荐大多数场景使用。", en: "Best balance of speed and quality. Recommended for most uses." },
+              { tier: "premium" as const, zh: "最高质量输出，适合专业创作和重要内容发布。", en: "Highest quality. Best for professional and important content." },
+            ].map((t) => (
+              <div key={t.tier} className="rounded-xl border border-gray-100 dark:border-gray-700 p-3 space-y-2">
+                <TierBadge tier={t.tier} locale={locale} />
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  {locale === "zh" ? t.zh : t.en}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
 

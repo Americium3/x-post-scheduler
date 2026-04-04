@@ -1,16 +1,32 @@
 import OpenAI from "openai";
 import type { TokenUsage } from "./usage-tracking";
 
+/** Primary client: OpenAI (paid) */
 export function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
-
   if (!apiKey) {
-    throw new Error(
-      "Missing OPENAI_API_KEY. Please set it in your .env.local file."
-    );
+    throw new Error("Missing OPENAI_API_KEY");
   }
-
   return new OpenAI({ apiKey });
+}
+
+/** Free fallback client: OpenRouter (free models, OpenAI-compatible) */
+function getOpenRouterClient(): OpenAI | null {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return null;
+  return new OpenAI({
+    apiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+  });
+}
+
+/** Resolve which client + model to use. Prefers free OpenRouter, falls back to OpenAI. */
+function resolveTextClient(): { client: OpenAI; model: string } {
+  const orClient = getOpenRouterClient();
+  if (orClient) {
+    return { client: orClient, model: "qwen/qwen3.6-plus:free" };
+  }
+  return { client: getOpenAIClient(), model: "gpt-4o" };
 }
 
 export interface GenerateResult {
@@ -41,7 +57,8 @@ export async function generateTweet(
   contentProfile?: string,
 ): Promise<GenerateResult> {
   try {
-    const client = getOpenAIClient();
+    const { client, model } = resolveTextClient();
+    console.log(`[generateTweet] Using model: ${model}`);
 
     const languageInstruction = language
       ? `IMPORTANT: Generate the tweet in ${language}.`
@@ -80,7 +97,7 @@ Generate tweets that are relevant to this knowledge base content.`;
       : "Generate an engaging tweet based on the knowledge base content. Pick an interesting topic or fact to share.";
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -142,7 +159,7 @@ export async function generateTweetSuggestions(
   model?: string;
 }> {
   try {
-    const client = getOpenAIClient();
+    const { client, model } = resolveTextClient();
 
     const languageInstruction = language
       ? `IMPORTANT: Generate all tweets in ${language}.`
@@ -181,7 +198,7 @@ Generate ${count} different tweet options, each on a new line. Just the tweet te
       : `Generate ${count} different engaging tweets based on the knowledge base content.`;
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

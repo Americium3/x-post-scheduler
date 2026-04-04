@@ -58,7 +58,7 @@ export async function GET() {
             lineHeight: 1.4,
           }}
         >
-          AI Social Media Marketing Copilot
+          AI Social Media Marketing Automation Copilot
         </div>
 
         <div

@@ -491,20 +491,22 @@ export default function LandingContent({
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight">
+        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
           {t("heroTitle")}
           {highlight && (
             <>
-              <br className="hidden sm:block" />
-              <span className="text-blue-600 dark:text-blue-400">
-                {" "}
+              {" "}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 {highlight}
               </span>
             </>
           )}
         </h2>
-        <p className="mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+        <p className="mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
           {t("heroSubtitle")}
+        </p>
+        <p className="mt-4 text-sm font-medium text-gray-400 dark:text-gray-500 tracking-wide">
+          {t("heroStats")}
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
       "https://x-post-scheduler.jytech.us",
   ),
   title: {
-    default: "xPilot — AI Social Media Marketing Copilot",
+    default: "xPilot — AI Social Media Marketing Automation Copilot",
     template: "%s | xPilot",
   },
   description:
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
         url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "xPilot — AI Social Media Marketing Copilot",
+        alt: "xPilot — AI Social Media Marketing Automation Copilot",
       },
     ],
   },

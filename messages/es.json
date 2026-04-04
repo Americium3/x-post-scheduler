@@ -516,7 +516,7 @@
     "dashboard": "Dashboard",
     "goToDashboard": "Go to Dashboard",
     "betaNotice": "This project is currently in beta testing. Please do not use it in production environments.",
-    "heroTitle": "Your Social Marketing Copilot AI",
+    "heroTitle": "AI Social Media Marketing Automation Copilot",
     "heroHighlight": "",
     "heroSubtitle": "AI-powered content creation, smart scheduling, and analytics — starting with X, expanding to every major social platform. Built by a big tech engineer, designed for small teams. Free $5 credit to get started.",
     "getStarted": "Get Started Free",
@@ -713,7 +713,7 @@
   },
   "login": {
     "title": "xPilot",
-    "subtitle": "Your social marketing copilot AI - Schedule and automate your X posts with AI-powered content generation",
+    "subtitle": "AI social media marketing automation - Schedule and automate your X posts with AI-powered content generation",
     "signIn": "Sign In / Sign Up",
     "features": "Features:",
     "feature1": "Smart scheduling & multi-account auto-publish",

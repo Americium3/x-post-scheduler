@@ -688,7 +688,7 @@ export default async function ChangelogPage({
                     </h3>
                     <p className="text-gray-700 dark:text-gray-300 mb-4">
                       随着产品的不断发展，我们已经从单纯的"发帖调度工具"成长为一个全方位的{" "}
-                      <strong>社媒营销飞行副驾驶 AI</strong>。xPilot
+                      <strong>社媒营销自动化助理</strong>。xPilot
                       更好地体现了我们的产品定位：
                     </p>
                     <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
@@ -725,13 +725,13 @@ export default async function ChangelogPage({
                           xPilot
                         </p>
                         <p className="text-lg text-gray-600 dark:text-gray-400 mb-1">
-                          Your Social Marketing Copilot AI
+                          Your Social Media Marketing Automation Copilot
                         </p>
                         <p className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mt-4">
                           X 推创
                         </p>
                         <p className="text-base text-gray-600 dark:text-gray-400">
-                          你的社媒营销飞行副驾驶 AI
+                          你的社媒营销自动化助理
                         </p>
                       </div>
                     </div>
@@ -775,7 +775,7 @@ export default async function ChangelogPage({
                     <p className="text-gray-700 dark:text-gray-300 mb-4">
                       As our product has evolved, we've grown from a simple
                       "post scheduler" into a comprehensive{" "}
-                      <strong>social marketing copilot AI</strong>. xPilot
+                      <strong>social media marketing automation</strong>. xPilot
                       better reflects our product vision:
                     </p>
                     <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
@@ -817,13 +817,13 @@ export default async function ChangelogPage({
                           xPilot
                         </p>
                         <p className="text-lg text-gray-600 dark:text-gray-400 mb-1">
-                          Your Social Marketing Copilot AI
+                          Your Social Media Marketing Automation Copilot
                         </p>
                         <p className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mt-4">
                           X 推创
                         </p>
                         <p className="text-base text-gray-600 dark:text-gray-400">
-                          你的社媒营销飞行副驾驶 AI
+                          你的社媒营销自动化助理
                         </p>
                       </div>
                     </div>
