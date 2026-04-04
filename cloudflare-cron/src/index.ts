@@ -62,6 +62,9 @@ const worker = {
         // Every slot (3x/day at 01:00, 13:00, 23:00 UTC): process scheduled posts
         await safeTrigger(env, "Scheduler", "/api/scheduler");
 
+        // Process recurring YouTube schedules
+        await safeTrigger(env, "Recurring-YouTube", "/api/cron/recurring-youtube");
+
         // Slot 1 (UTC 01:00): Full daily pipeline
         if (hour === 1) {
           // Generate daily content for users

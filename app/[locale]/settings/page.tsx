@@ -27,6 +27,17 @@ interface XAccount {
   lastSyncedAt: string | null;
 }
 
+interface YouTubeAccount {
+  id: string;
+  label: string | null;
+  channelTitle: string | null;
+  channelId: string | null;
+  isDefault: boolean;
+  createdAt: string;
+  subscriberCount: number | null;
+  lastSyncedAt: string | null;
+}
+
 type VerifyStatus = "idle" | "checking" | "ok" | "error";
 
 interface EditState {
@@ -84,6 +95,7 @@ export default function SettingsPage() {
   const pathname = usePathname();
   const tr = (en: string, zh: string) => (appLanguage === "zh" ? zh : en);
   const [accounts, setAccounts] = useState<XAccount[]>([]);
+  const [youtubeAccounts, setYoutubeAccounts] = useState<YouTubeAccount[]>([]);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [credits, setCredits] = useState<CreditData>({
     balanceCents: 0,
@@ -171,6 +183,70 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!authLoading && user) {
       void fetchData();
+    }
+  }, [authLoading, user]);
+
+  // Handle YouTube OAuth callback
+  useEffect(() => {
+    const handleYouTubeCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+      const state = urlParams.get("state");
+
+      if (code && state) {
+        try {
+          const stateData = JSON.parse(state);
+          const clientId = sessionStorage.getItem("youtube_client_id");
+          const clientSecret = sessionStorage.getItem("youtube_client_secret");
+
+          if (clientId && clientSecret) {
+            const res = await fetch("/api/settings/youtube", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                code,
+                clientId,
+                clientSecret,
+              }),
+            });
+
+            const data = await res.json();
+
+            // Clean up
+            sessionStorage.removeItem("youtube_client_id");
+            sessionStorage.removeItem("youtube_client_secret");
+
+            // Remove query params from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            if (res.ok) {
+              setMessage({
+                type: "success",
+                text: tr(
+                  `YouTube account connected as ${data.channelTitle || "unknown"}`,
+                  `YouTube 账号已连接：${data.channelTitle || "unknown"}`,
+                ),
+              });
+              await fetchData();
+            } else {
+              setMessage({
+                type: "error",
+                text: data.error || tr("Failed to connect YouTube account", "连接 YouTube 账号失败"),
+              });
+            }
+          }
+        } catch (error) {
+          console.error("YouTube callback error:", error);
+          setMessage({
+            type: "error",
+            text: tr("Failed to complete YouTube authorization", "完成 YouTube 授权失败"),
+          });
+        }
+      }
+    };
+
+    if (!authLoading && user) {
+      void handleYouTubeCallback();
     }
   }, [authLoading, user]);
 
@@ -406,6 +482,7 @@ export default function SettingsPage() {
       if (!settingsRes.ok) return;
       const data = await settingsRes.json();
       setAccounts(Array.isArray(data.accounts) ? data.accounts : []);
+      setYoutubeAccounts(Array.isArray(data.youtubeAccounts) ? data.youtubeAccounts : []);
       if ((data.accounts?.length ?? 0) > 0) {
         setSetAsDefault(false);
       }
@@ -1545,6 +1622,242 @@ export default function SettingsPage() {
                         : tr("Add Account", "添加账号")}
                     </button>
                   </div>
+                </form>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        {/* YouTube Accounts */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+          <div className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {tr("Connected YouTube Accounts", "已连接的 YouTube 账号")}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {tr(
+                  "Connect YouTube channels to upload and schedule videos.",
+                  "连接 YouTube 频道以上传和定时发布视频。",
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 self-start">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {tr(
+                  `${youtubeAccounts.length} connected`,
+                  `${youtubeAccounts.length} 已连接`,
+                )}
+              </span>
+            </div>
+          </div>
+
+          {youtubeAccounts.length === 0 ? (
+            <p className="px-6 pb-4 text-sm text-gray-500 dark:text-gray-400">
+              {tr("No YouTube accounts connected yet.", "尚未连接任何 YouTube 账号。")}
+            </p>
+          ) : (
+            <div className="px-6 pb-6 space-y-3">
+              {youtubeAccounts.map((account) => (
+                <div
+                  key={account.id}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                >
+                  <div className="min-w-0 flex items-center gap-2">
+                    <span className="shrink-0 w-2 h-2 rounded-full bg-green-500" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                        {account.label || account.channelTitle || tr("Unnamed channel", "未命名频道")}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {account.channelTitle && `${account.channelTitle}`}
+                        {account.isDefault ? tr(" • Default", " • 默认") : ""}
+                        {account.subscriberCount != null
+                          ? ` • ${(account.subscriberCount ?? 0).toLocaleString()} ${tr("subscribers", "订阅者")}`
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    {!account.isDefault && (
+                      <button
+                        onClick={() => {
+                          setMessage(null);
+                          fetch("/api/settings/youtube", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ youtubeAccountId: account.id }),
+                          }).then(async (res) => {
+                            if (res.ok) {
+                              await fetchData();
+                              setMessage({
+                                type: "success",
+                                text: tr("Default account updated", "默认账号已更新"),
+                              });
+                            }
+                          });
+                        }}
+                        className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        {tr("Set default", "设为默认")}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (
+                          !confirm(
+                            tr(
+                              "Remove this YouTube account connection?",
+                              "确认移除该 YouTube 账号连接？",
+                            ),
+                          )
+                        )
+                          return;
+                        setMessage(null);
+                        fetch(
+                          `/api/settings/youtube?youtubeAccountId=${encodeURIComponent(account.id)}`,
+                          { method: "DELETE" },
+                        ).then(async (res) => {
+                          if (res.ok) {
+                            await fetchData();
+                            setMessage({
+                              type: "success",
+                              text: tr("Account removed", "账号已移除"),
+                            });
+                          }
+                        });
+                      }}
+                      className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    >
+                      {tr("Remove", "移除")}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add YouTube Account */}
+          <div className="border-t border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {tr("Add YouTube Account", "添加 YouTube 账号")}
+            </h2>
+
+            {/* Manual Client ID/Secret entry */}
+            <details className="group" open>
+              <div>
+                <div className="flex justify-end mb-3">
+                  <a
+                    href="https://console.cloud.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    {tr("How to get YouTube credentials?", "如何获取 YouTube 凭据？")}
+                  </a>
+                </div>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setMessage(null);
+                    const youtubeClientId = (document.getElementById("youtubeClientId") as HTMLInputElement)?.value || "";
+                    const youtubeClientSecret = (document.getElementById("youtubeClientSecret") as HTMLInputElement)?.value || "";
+
+                    if (!youtubeClientId.trim() || !youtubeClientSecret.trim()) {
+                      setMessage({
+                        type: "error",
+                        text: tr("Client ID and Secret are required", "Client ID 和 Secret 为必填项"),
+                      });
+                      return;
+                    }
+
+                    setSaving(true);
+                    try {
+                      const res = await fetch("/api/settings/youtube", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          clientId: youtubeClientId,
+                          clientSecret: youtubeClientSecret,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.authUrl) {
+                        // Store credentials in sessionStorage for callback
+                        sessionStorage.setItem("youtube_client_id", youtubeClientId);
+                        sessionStorage.setItem("youtube_client_secret", youtubeClientSecret);
+
+                        // Redirect to Google OAuth
+                        window.location.href = data.authUrl;
+                      } else if (res.ok) {
+                        setMessage({
+                          type: "success",
+                          text: tr(
+                            `YouTube account connected as ${data.channelTitle || "unknown"}`,
+                            `YouTube 账号已连接：${data.channelTitle || "unknown"}`,
+                          ),
+                        });
+                        (document.getElementById("youtubeClientId") as HTMLInputElement).value = "";
+                        (document.getElementById("youtubeClientSecret") as HTMLInputElement).value = "";
+                        await fetchData();
+                      } else {
+                        setMessage({
+                          type: "error",
+                          text: data.error || tr("Failed to connect YouTube account", "连接 YouTube 账号失败"),
+                        });
+                      }
+                    } catch {
+                      setMessage({
+                        type: "error",
+                        text: tr("Failed to save credentials", "保存凭据失败"),
+                      });
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {tr("Client ID", "Client ID")}
+                      </label>
+                      <input
+                        id="youtubeClientId"
+                        type="password"
+                        required
+                        placeholder={tr(
+                          "Paste your Client ID",
+                          "粘贴你的 Client ID",
+                        )}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {tr("Client Secret", "Client Secret")}
+                      </label>
+                      <input
+                        id="youtubeClientSecret"
+                        type="password"
+                        required
+                        placeholder={tr(
+                          "Paste your Client Secret",
+                          "粘贴你的 Client Secret",
+                        )}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {saving
+                      ? tr("Connecting...", "连接中...")
+                      : tr("Add YouTube Account", "添加 YouTube 账号")}
+                  </button>
                 </form>
               </div>
             </details>

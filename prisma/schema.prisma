@@ -54,9 +54,11 @@ model User {
   posts              Post[]
   followerSnapshots  FollowerSnapshot[]
   recurringSchedules RecurringSchedule[]
+  recurringYoutubeSchedules RecurringYoutubeSchedule[]
   knowledgeSources   KnowledgeSource[]
   mediaAssets        MediaAsset[]
   xAccounts          XAccount[]
+  youtubeAccounts    YouTubeAccount[]
   usageEvents        UsageEvent[]
   knowledgeImages    KnowledgeImage[]
   creditTransactions CreditTransaction[]
@@ -108,6 +110,7 @@ model Post {
   scheduledAt DateTime?
   postedAt    DateTime?
   tweetId     String?   // ID returned from X API after posting
+  youtubeVideoId String?  // ID returned from YouTube API after uploading
   impressions Int?      // Fetched from X API public_metrics
   likes       Int?      // Fetched from X API public_metrics
   retweets    Int?      // Fetched from X API public_metrics
@@ -117,18 +120,25 @@ model Post {
   threadId    String?   // Groups posts in a thread
   threadOrder Int?      // Order within thread (0 = first)
   error       String?
+  platform    String    @default("x")  // "x" | "youtube"
+  videoTitle  String?   // YouTube video title
+  videoDescription String?  // YouTube video description
+  videoVisibility String?  // YouTube visibility: "public" | "private" | "unlisted"
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   mediaAssetId String?
   userId       String?
   xAccountId   String?
+  youtubeAccountId String?
   user         User?     @relation(fields: [userId], references: [id])
   xAccount     XAccount? @relation(fields: [xAccountId], references: [id])
+  youtubeAccount YouTubeAccount? @relation(fields: [youtubeAccountId], references: [id])
 
   @@index([userId, createdAt])
   @@index([status, scheduledAt])
   @@index([userId, status, postedAt])
+  @@index([platform])
 }
 
 model RecurringSchedule {
@@ -149,6 +159,32 @@ model RecurringSchedule {
   xAccountId  String?
   user        User?    @relation(fields: [userId], references: [id])
   xAccount    XAccount? @relation(fields: [xAccountId], references: [id])
+
+  @@index([isActive, nextRunAt])
+  @@index([userId, isActive])
+}
+
+model RecurringYoutubeSchedule {
+  id          String   @id @default(cuid())
+  content     String
+  useAi       Boolean  @default(false)
+  aiPrompt    String?
+  aiLanguage  String?
+  trendRegion String?  // "global" | "usa" | "china" | "africa"
+  aspectRatio String?  // "16:9" | "9:16" | "1:1"
+  duration    Int?     // duration in seconds
+  model       String?  // AI model identifier
+  frequency   String   // daily, weekly, monthly
+  cronExpr    String   // cron expression
+  nextRunAt   DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId            String?
+  youtubeAccountId  String?
+  user              User?           @relation(fields: [userId], references: [id])
+  youtubeAccount    YouTubeAccount? @relation(fields: [youtubeAccountId], references: [id])
 
   @@index([isActive, nextRunAt])
   @@index([userId, isActive])
@@ -837,5 +873,31 @@ model TeamCreditTransaction {
   team   Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId, createdAt])
+}
+
+// ── YouTube Account ──────────────────────────────────────────────────────────
+
+model YouTubeAccount {
+  id                 String   @id @default(cuid())
+  label              String?
+  channelTitle       String?
+  channelId          String?
+  subscriberCount    Int?
+  lastSyncedAt       DateTime?
+  isDefault          Boolean  @default(false)
+  clientId           String   // Google OAuth2 Client ID (encrypted)
+  clientSecret       String   // Google OAuth2 Client Secret (encrypted)
+  refreshToken       String   // OAuth2 refresh token (encrypted)
+  accessToken        String?  // OAuth2 access token (encrypted, may expire)
+  accessTokenExpiry  DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts              Post[]
+  recurringYoutubeSchedules RecurringYoutubeSchedule[]
+
+  @@index([userId, isDefault])
 }
 
