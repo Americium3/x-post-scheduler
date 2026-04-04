@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type React from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { isVerifiedMember } from "@/lib/subscription";
 import DashboardShell from "@/components/DashboardShell";
 
@@ -536,7 +537,8 @@ function MediaCard({
 }
 
 export default function GalleryClientPage() {
-  const [lang, setLang] = useState<Lang>("en");
+  const locale = useLocale();
+  const [lang, setLang] = useState<Lang>(locale === "zh" ? "zh" : "en");
   const [tab, setTab] = useState<Tab>("public");
   const [publicItems, setPublicItems] = useState<GalleryItem[]>([]);
   const [myItems, setMyItems] = useState<GalleryItem[]>([]);
@@ -550,17 +552,10 @@ export default function GalleryClientPage() {
 
   const t = TEXT[lang];
 
+  // Sync lang with URL locale
   useEffect(() => {
-    const saved =
-      localStorage.getItem("app-lang") || localStorage.getItem("gallery-lang");
-    if (saved === "zh" || saved === "en") {
-      setLang(saved);
-      return;
-    }
-    if (navigator.language.toLowerCase().startsWith("zh")) {
-      setLang("zh");
-    }
-  }, []);
+    setLang(locale === "zh" ? "zh" : "en");
+  }, [locale]);
 
   const updateLang = (nextLang: Lang) => {
     setLang(nextLang);
