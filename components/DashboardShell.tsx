@@ -23,6 +23,7 @@ export default function DashboardShell({
     { href: `${prefix}/media-studio/gallery/generate`, label: tNav("images"), indent: true },
     { href: `${prefix}/media-studio/posts`, label: tNav("posts"), indent: true },
     { href: `${prefix}/media-studio/gallery`, label: tNav("gallery"), indent: true },
+    { href: `${prefix}/media-studio/post-production`, label: locale === "zh" ? "后期制作" : "Post Production", indent: true },
     { href: `${prefix}/media-studio/assets`, label: tNav("assets"), indent: true },
     { href: `${prefix}/recurring`, label: tNav("autoPost") },
     { href: `${prefix}/knowledge`, label: tNav("knowledge") },
@@ -54,24 +55,32 @@ export default function DashboardShell({
             <img src="/logo-wordmark.svg" alt="xPilot" width={140} height={28} style={{ height: 28, width: "auto" }} />
           </Link>
         </div>
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`block ${link.indent ? "pl-7 pr-3" : "px-3"} py-2 rounded-md text-sm ${
-                isActive(link.href)
-                  ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
-                  : link.highlight
-                    ? "text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                    : link.indent
-                      ? "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+          {navLinks.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-2 ${link.indent ? "pl-8 pr-3 py-1.5" : "px-3 py-2"} rounded-lg text-sm transition-all duration-150 ${
+                  active
+                    ? link.indent
+                      ? "text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 font-medium"
+                      : "bg-gray-900 dark:bg-white/10 text-white dark:text-white font-medium shadow-sm"
+                    : link.highlight
+                      ? "text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      : link.indent
+                        ? "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                }`}
+              >
+                {link.indent && (
+                  <span className={`w-1 h-1 rounded-full ${active ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"}`} />
+                )}
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="px-3 py-4 border-t border-gray-200 dark:border-gray-700">
           <UserMenu hideNavigationLinksOnDesktop />

@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
         select: {
           id: true, type: true, modelLabel: true, prompt: true,
           mode: true, duration: true, aspectRatio: true, generateAudio: true,
-          status: true, outputUrl: true, error: true, feeCents: true,
+          status: true, outputUrl: true, inputImageUrl: true, error: true, feeCents: true,
+          pollAttempts: true,
           createdAt: true, completedAt: true,
         },
       })
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest) {
         select: {
           id: true, type: true, modelLabel: true, prompt: true,
           mode: true, duration: true, aspectRatio: true, generateAudio: true,
-          status: true, outputUrl: true, error: true, feeCents: true,
+          status: true, outputUrl: true, inputImageUrl: true, error: true, feeCents: true,
+          pollAttempts: true,
           createdAt: true, completedAt: true,
         },
       })
@@ -57,10 +59,24 @@ export async function GET(request: NextRequest) {
         select: {
           id: true, type: true, modelLabel: true, prompt: true,
           blobUrl: true, aspectRatio: true, mimeType: true, isPublic: true,
+          inputImageUrl: true, generationMeta: true,
           createdAt: true,
         },
       })
     : [];
+
+  // Strip internal fields from generationMeta
+  function cleanMeta(raw: string | null): Record<string, unknown> | null {
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed === "object" && parsed !== null) {
+        const { provider, pollUrl, taskId, backgroundTask, syncMode, byok, ...visible } = parsed;
+        return Object.keys(visible).length > 0 ? visible : null;
+      }
+      return null;
+    } catch { return null; }
+  }
 
   // Normalize gallery items to the same shape
   const galleryAsTasks = galleryItems.map((g) => ({
@@ -68,12 +84,13 @@ export async function GET(request: NextRequest) {
     type: g.type,
     modelLabel: g.modelLabel,
     prompt: g.prompt,
-    mode: null,
-    duration: null,
+    mode: cleanMeta(g.generationMeta)?.mode as string | null ?? null,
+    duration: cleanMeta(g.generationMeta)?.duration as number | null ?? null,
     aspectRatio: g.aspectRatio,
-    generateAudio: false,
+    generateAudio: !!(cleanMeta(g.generationMeta)?.generateAudio),
     status: "completed" as const,
     outputUrl: g.blobUrl,
+    inputImageUrl: g.inputImageUrl,
     error: null,
     feeCents: 0,
     createdAt: g.createdAt,

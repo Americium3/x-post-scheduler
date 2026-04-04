@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { pollVideo, type VideoProvider } from "@/lib/video-provider";
+import { runVideoEdit } from "@/lib/replicate-video-edit";
 import { saveToGallery } from "@/lib/gallery";
 import { put } from "@/lib/r2";
 
@@ -39,7 +40,84 @@ export async function POST(request: NextRequest) {
 
   for (const task of tasks) {
     try {
-      // If task has no provider task ID yet, it hasn't been submitted — skip
+      // Handle AI Edit background tasks
+      if (task.mode === "ai-edit" && !task.providerTaskId) {
+        console.log(`[TaskProcessor] Running AI Edit task ${task.id}`);
+        await prisma.mediaTask.update({ where: { id: task.id }, data: { status: "processing" } });
+        try {
+          const params = JSON.parse(task.providerPollUrl ?? "{}");
+          const editResult = await runVideoEdit({
+            videoUrl: params.videoUrl,
+            prompt: params.prompt,
+            referenceImageUrl: params.referenceImageUrl,
+          });
+          if (editResult.status === "failed") throw new Error(editResult.error);
+          // Persist to R2
+          let url = editResult.outputUrl;
+          try {
+            const resp = await fetch(editResult.outputUrl);
+            if (resp.ok) {
+              const buf = Buffer.from(await resp.arrayBuffer());
+              const up = await put(`video-edit/${task.userId}/${Date.now()}.mp4`, buf, { contentType: "video/mp4", addRandomSuffix: false });
+              url = up.url;
+            }
+          } catch {}
+          await prisma.mediaTask.update({ where: { id: task.id }, data: { status: "completed", outputUrl: url, completedAt: new Date() } });
+          await saveToGallery({ userId: task.userId, type: "video", modelId: "wan-2.7-videoedit", modelLabel: "AI Edit (Wan 2.7)", prompt: task.prompt, sourceUrl: url, isPublic: false });
+          completed++;
+        } catch (err) {
+          await prisma.mediaTask.update({ where: { id: task.id }, data: { status: "failed", error: err instanceof Error ? err.message : "AI edit failed" } });
+          failed++;
+        }
+        continue;
+      }
+
+      // Handle Post-production background tasks (call the sync endpoint internally)
+      if (task.mode === "post-production" && !task.providerTaskId) {
+        console.log(`[TaskProcessor] Running post-production task ${task.id}`);
+        await prisma.mediaTask.update({ where: { id: task.id }, data: { status: "processing" } });
+        try {
+          const params = JSON.parse(task.providerPollUrl ?? "{}");
+          // Call our own post-production endpoint synchronously via internal fetch
+          const baseUrl = process.env.NEXT_PUBLIC_APP_PUBLIC_URL || process.env.APP_BASE_URL || "http://localhost:3000";
+          const form = new FormData();
+          form.append("videoUrl", params.sourceVideoUrl);
+          form.append("textOverlays", params.textOverlays ?? "[]");
+          form.append("masks", params.masks ?? "[]");
+          form.append("videoDims", params.videoDims ?? '{"w":1280,"h":720}');
+          if (params.sam3MaskUrl) form.append("sam3MaskUrl", params.sam3MaskUrl);
+          if (params.replaceUrl) {
+            // Download replacement and re-attach as file
+            const rResp = await fetch(params.replaceUrl);
+            if (rResp.ok) {
+              const rBuf = Buffer.from(await rResp.arrayBuffer());
+              const rBlob = new Blob([rBuf], { type: params.replaceUrl.endsWith(".mp4") ? "video/mp4" : "image/png" });
+              form.append("replaceFile", rBlob, "replacement");
+              form.append("replaceMode", params.replaceMode ?? "fill");
+              form.append("replaceStartTime", String(params.replaceStartTime ?? 0));
+              form.append("replaceEndTime", String(params.replaceEndTime ?? 0));
+            }
+          }
+          // Note: background=false for sync execution
+          const secret = process.env.CRON_SECRET;
+          const ppRes = await fetch(`${baseUrl}/api/toolbox/post-production`, {
+            method: "POST",
+            headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+            body: form,
+          });
+          const ppData = await ppRes.json();
+          if (!ppRes.ok) throw new Error(ppData.error || "Post-production failed");
+          await prisma.mediaTask.update({ where: { id: task.id }, data: { status: "completed", outputUrl: ppData.url, completedAt: new Date() } });
+          await saveToGallery({ userId: task.userId, type: "video", modelId: "post-production", modelLabel: "Post Production", prompt: task.prompt, sourceUrl: ppData.url, isPublic: false });
+          completed++;
+        } catch (err) {
+          await prisma.mediaTask.update({ where: { id: task.id }, data: { status: "failed", error: err instanceof Error ? err.message : "Post-production failed" } });
+          failed++;
+        }
+        continue;
+      }
+
+      // Standard video generation polling
       if (!task.providerTaskId) {
         continue;
       }

@@ -13,10 +13,13 @@ interface MediaTask {
   mode: string | null;
   status: string;
   outputUrl: string | null;
+  inputImageUrl?: string | null;
   error: string | null;
   duration: number | null;
   aspectRatio: string | null;
+  generateAudio?: boolean;
   feeCents: number;
+  pollAttempts?: number;
   createdAt: string;
   completedAt: string | null;
   isPublic?: boolean;
@@ -119,15 +122,15 @@ export default function AssetsPage() {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 mb-4 overflow-x-auto">
+        <div className="flex gap-1.5 mb-5 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-x-auto w-fit">
           {filters.map((f) => (
             <button
               key={f.key}
               onClick={() => { setFilter(f.key); setLoading(true); }}
-              className={`px-3 py-1.5 text-sm rounded-lg whitespace-nowrap transition-colors ${
+              className={`px-4 py-1.5 text-sm rounded-lg whitespace-nowrap transition-all duration-150 ${
                 filter === f.key
-                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium shadow-sm"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
               {isZh ? f.labelZh : f.label}
@@ -159,27 +162,19 @@ export default function AssetsPage() {
               const timeAgo = getTimeAgo(task.createdAt, isZh);
 
               return (
-                <div
+                <Link
                   key={task.id}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  href={`${prefix}/media-studio/assets/${task.id}`}
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-800 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-150"
                 >
-                  {/* Preview / Icon */}
-                  <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0 overflow-hidden">
+                  {/* Thumbnail */}
+                  <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-700/60 flex items-center justify-center shrink-0 overflow-hidden">
                     {task.outputUrl && task.status === "completed" ? (
                       task.type === "video" ? (
-                        <video
-                          src={task.outputUrl}
-                          className="w-full h-full object-cover rounded-lg"
-                          muted
-                          preload="metadata"
-                        />
+                        <video src={task.outputUrl} className="w-full h-full object-cover rounded-xl" muted preload="metadata" />
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={task.outputUrl}
-                          alt=""
-                          className="w-full h-full object-cover rounded-lg"
-                        />
+                        <img src={task.outputUrl} alt="" className="w-full h-full object-cover rounded-xl" />
                       )
                     ) : (
                       <span className="text-2xl">{task.type === "video" ? "🎬" : "🖼️"}</span>
@@ -188,61 +183,38 @@ export default function AssetsPage() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${sc.color}`}>
+                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${sc.color}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
                         {isZh ? sc.labelZh : sc.label}
                       </span>
-                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{task.modelLabel}</span>
-                      <span className="text-xs text-gray-400">·</span>
-                      <span className="text-xs text-gray-400">{task.type === "video" ? "🎬" : "🖼️"}{task.mode ? ` ${task.mode}` : ""}</span>
-                      {task.isPublic !== undefined && (
-                        <span className={`text-xs ${task.isPublic ? "text-green-500" : "text-gray-400"}`}>
-                          {task.isPublic ? (isZh ? "已发布" : "Published") : (isZh ? "未发布" : "Private")}
-                        </span>
-                      )}
-                      <span className="text-xs text-gray-400">·</span>
-                      <span className="text-xs text-gray-400">{timeAgo}</span>
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400">{task.modelLabel}</span>
+                      <span className="text-[11px] text-gray-400">·</span>
+                      <span className="text-[11px] text-gray-400">{timeAgo}</span>
+                      <span className="text-[11px] text-gray-300 dark:text-gray-600 font-mono">{task.id.slice(0, 8)}</span>
                     </div>
                     <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
                       {task.prompt}
                     </p>
-                    {task.duration && (
-                      <span className="text-xs text-gray-400">{task.duration}s · {task.aspectRatio}</span>
-                    )}
-                    {task.error && (
-                      <p className="text-xs text-red-500 mt-1 truncate">{task.error}</p>
-                    )}
+                    {/* Progress bar for processing tasks */}
+                    {(task.status === "processing" || task.status === "pending") && (() => {
+                      const elapsed = (Date.now() - new Date(task.createdAt).getTime()) / 1000;
+                      const est = getEstimatedSeconds(task.modelLabel, task.duration);
+                      const progress = Math.min(95, Math.round((elapsed / est.max) * 100));
+                      return (
+                        <div className="mt-1.5 w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }} />
+                        </div>
+                      );
+                    })()}
+                    {task.error && <p className="text-[11px] text-red-500 mt-0.5 truncate">{task.error}</p>}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    {task.status === "completed" && task.outputUrl && (
-                      <>
-                        <a
-                          href={task.outputUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        >
-                          {isZh ? "查看" : "View"}
-                        </a>
-                        <a
-                          href={task.outputUrl}
-                          download
-                          className="px-3 py-1.5 text-xs font-medium bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                          {isZh ? "下载" : "Download"}
-                        </a>
-                      </>
-                    )}
-                    {task.feeCents > 0 && (
-                      <span className="text-xs text-gray-400">
-                        ${(task.feeCents / 100).toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                  {/* Chevron */}
+                  <svg className="w-4 h-4 text-gray-300 dark:text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               );
             })}
           </div>
@@ -250,6 +222,26 @@ export default function AssetsPage() {
       </div>
     </DashboardShell>
   );
+}
+
+function getEstimatedSeconds(modelLabel: string, duration: number | null): { min: number; max: number } {
+  const label = modelLabel.toLowerCase();
+  let minS = 30, maxS = 120;
+  if (label.includes("480p") || label.includes("ultra fast")) { minS = 20; maxS = 60; }
+  else if (label.includes("720p")) { minS = 40; maxS = 120; }
+  else if (label.includes("seedance 2.0")) { minS = 60; maxS = 300; }
+  else if (label.includes("seedance")) { minS = 45; maxS = 180; }
+  else if (label.includes("kling")) { minS = 60; maxS = 240; }
+  else if (label.includes("wan 2.6") || label.includes("wan 2.7")) { minS = 40; maxS = 150; }
+  else if (label.includes("ai edit")) { minS = 60; maxS = 180; }
+  else if (label.includes("post production")) { minS = 30; maxS = 120; }
+  const f = Math.max(1, (duration ?? 5) / 5);
+  return { min: Math.round(minS * f), max: Math.round(maxS * f) };
+}
+
+function formatDuration(minS: number, maxS: number, isZh: boolean): string {
+  const fmt = (s: number) => s < 60 ? (isZh ? `${s}秒` : `${s}s`) : (isZh ? `${Math.round(s / 60)}分钟` : `${Math.round(s / 60)}min`);
+  return `${fmt(minS)} - ${fmt(maxS)}`;
 }
 
 function getTimeAgo(dateStr: string, isZh: boolean): string {

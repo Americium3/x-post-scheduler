@@ -27,6 +27,22 @@ import ConfigCard from "@/components/toolbox/ConfigCard";
 import ResultsCard from "@/components/toolbox/ResultsCard";
 import DashboardShell from "@/components/DashboardShell";
 
+function getEstWait(modelLabel: string, duration: number, isZh: boolean): string {
+  const label = modelLabel.toLowerCase();
+  let minS = 30, maxS = 120;
+  if (label.includes("480p") || label.includes("ultra fast")) { minS = 20; maxS = 60; }
+  else if (label.includes("720p")) { minS = 40; maxS = 120; }
+  else if (label.includes("seedance 2.0")) { minS = 60; maxS = 300; }
+  else if (label.includes("seedance")) { minS = 45; maxS = 180; }
+  else if (label.includes("kling")) { minS = 60; maxS = 240; }
+  else if (label.includes("wan 2.6")) { minS = 40; maxS = 150; }
+  const f = Math.max(1, duration / 5);
+  minS = Math.round(minS * f);
+  maxS = Math.round(maxS * f);
+  const fmt = (s: number) => s < 60 ? (isZh ? `${s}秒` : `${s}s`) : (isZh ? `${Math.round(s / 60)}分钟` : `${Math.round(s / 60)}min`);
+  return `${fmt(minS)} - ${fmt(maxS)}`;
+}
+
 export default function StudioToolbox({ defaultTab = "video" as Tab }: { defaultTab?: Tab }) {
   const locale = useLocale();
   const isZh = locale === "zh";
@@ -1024,8 +1040,8 @@ export default function StudioToolbox({ defaultTab = "video" as Tab }: { default
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {locale === "zh"
-                ? "视频正在后台生成中，完成后将自动保存到作品展示。你可以关闭此页面。"
-                : "Your video is being generated in the background. It will be auto-saved to Gallery when complete. You can close this page."}
+                ? `视频正在后台生成中（预计 ${getEstWait(selectedModel?.label ?? "", duration, locale === "zh")}），完成后将自动保存到素材管理。你可以关闭此页面。`
+                : `Your video is being generated in the background (est. ${getEstWait(selectedModel?.label ?? "", duration, locale === "zh")}). It will be auto-saved to Materials. You can close this page.`}
             </p>
             <div className="flex justify-center gap-3">
               <a

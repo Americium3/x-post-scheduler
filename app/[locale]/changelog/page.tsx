@@ -37,6 +37,97 @@ export default async function ChangelogPage({
 
         {/* Timeline */}
         <div className="space-y-8">
+
+          {/* 2026-04 Storage Migration & Data Loss Notice */}
+          <div className="relative pl-8 pb-8 border-l-2 border-red-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-red-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                  {isZh ? "重要公告" : "Important Notice"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年4月4日" : "April 4, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "存储迁移公告 & 历史素材丢失说明"
+                  : "Storage Migration Notice & Historical Data Loss"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">发生了什么？</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      我们发现在 2026 年 2 月 21 日至 3 月 28 日期间生成的部分图片和视频素材无法正常访问。
+                      经过调查，问题原因如下：
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li>平台此前使用 Vercel Blob 作为文件存储服务，但由于 Hobby 计划的存储限制（500MB），导致部分文件上传失败</li>
+                      <li>上传失败后，系统回退保存了 AI 模型提供商的临时 CDN 链接（有效期约 2 周）</li>
+                      <li>这些临时链接过期后，相关素材便无法再访问</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">我们做了什么？</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li><strong>存储迁移至 Cloudflare R2</strong> — 我们已将文件存储从 Vercel Blob 完整迁移至 Cloudflare R2。R2 提供 10GB 免费存储空间，且无出站流量费用，彻底解决了存储容量不足的问题</li>
+                      <li><strong>后台任务处理机制</strong> — 新增了后台任务系统，所有生成的视频和图片会立即从 AI 提供商下载并永久保存至我们自有的 R2 存储空间，不再依赖临时链接</li>
+                      <li><strong>清理了无法访问的历史记录</strong> — 已移除 63 条因链接过期而无法访问的素材记录，避免在素材管理中显示损坏内容</li>
+                      <li><strong>防删除保护</strong> — 输入文件清理机制现在会检查是否被素材库引用，确保不会误删仍在使用的文件</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">补偿措施</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      对于此次数据丢失给您造成的不便，我们深感歉意。为表示诚意，我们将为<strong>每位受影响的用户赠送 $10 平台点数</strong>，
+                      可用于视频生成、图片生成等所有 AI 服务。点数将在近日自动发放至您的账户。
+                    </p>
+
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-4">
+                      <p className="text-green-800 dark:text-green-300 font-medium">
+                        保障承诺：迁移至 R2 后，您的所有新素材都将安全存储在我们自有的云存储空间中，不会再出现类似的数据丢失问题。
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">What Happened?</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      We discovered that some images and videos generated between February 21 and March 28, 2026 are no longer accessible.
+                      After investigation, the root cause was identified:
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li>The platform previously used Vercel Blob for file storage, but the Hobby plan&apos;s 500MB storage limit caused some uploads to fail</li>
+                      <li>When uploads failed, the system fell back to saving temporary CDN URLs from AI model providers (valid for ~2 weeks)</li>
+                      <li>Once these temporary links expired, the associated media became inaccessible</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">What We Did</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li><strong>Migrated to Cloudflare R2</strong> — We&apos;ve fully migrated file storage from Vercel Blob to Cloudflare R2, which provides 10GB free storage with zero egress fees</li>
+                      <li><strong>Background task processing</strong> — All generated videos and images are now immediately downloaded from AI providers and permanently saved to our own R2 storage</li>
+                      <li><strong>Cleaned up broken records</strong> — Removed 63 gallery entries with expired URLs to prevent broken content from appearing in your materials</li>
+                      <li><strong>Delete protection</strong> — Input file cleanup now checks for gallery references before deleting, preventing accidental removal of files still in use</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Compensation</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      We sincerely apologize for the inconvenience caused by this data loss. As a gesture of goodwill,
+                      we are crediting <strong>$10 in platform credits to every affected user</strong>, usable for video generation,
+                      image generation, and all AI services. Credits will be automatically added to your account shortly.
+                    </p>
+
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-4">
+                      <p className="text-green-800 dark:text-green-300 font-medium">
+                        Our commitment: After migrating to R2, all your new media is securely stored in our own cloud storage. This type of data loss will not happen again.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* 2026-03 Free AI Models */}
           <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
             <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>

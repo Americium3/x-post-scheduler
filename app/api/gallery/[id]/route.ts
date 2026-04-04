@@ -44,9 +44,26 @@ export async function GET(
   }
 
   const origin = request.nextUrl.origin;
+
+  // Resolve endpoint for BytePluses-eligible models
+  let endpointId: string | undefined;
+  let endpointModel: string | undefined;
+  const byteplusEligible = [
+    "bytedance/seedance-v1.5-pro/text-to-video",
+    "bytedance/seedance-v1.5-pro/image-to-video",
+  ];
+  if (byteplusEligible.includes(item.modelId) && process.env.BYTEPLUSES_API_KEY) {
+    const { BYTEPLUSES_ENDPOINTS } = await import("@/lib/bytepluses");
+    const ep = BYTEPLUSES_ENDPOINTS["seedance-1.5-pro"];
+    endpointId = ep?.id;
+    endpointModel = ep?.model;
+  }
+
   const resolved = {
     ...item,
     inputImageUrl: resolveInputImageUrl(item.inputImageUrl, origin),
+    endpointId,
+    endpointModel,
   };
 
   if (item.isPublic) {

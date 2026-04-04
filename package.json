@@ -15,6 +15,7 @@
     "@ai-sdk/gateway": "^3.0.54",
     "@auth0/nextjs-auth0": "^4.14.1",
     "@aws-sdk/client-s3": "^3.1023.0",
+    "@getbrevo/brevo": "^5.0.3",
     "@google/generative-ai": "^0.24.1",
     "@openrouter/ai-sdk-provider": "^2.3.3",
     "@prisma/client": "^6.19.2",
@@ -35,6 +36,7 @@
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "recharts": "^3.7.0",
+    "replicate": "^1.4.0",
     "stripe": "^20.3.1",
     "twitter-api-v2": "^1.29.0",
     "vercel": "^50.32.5"

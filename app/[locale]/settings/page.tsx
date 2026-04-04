@@ -15,6 +15,7 @@ import {
 import type { TierKey } from "@/lib/subscription";
 import TeamSection from "@/components/TeamSection";
 import ReferralSection from "@/components/ReferralSection";
+import DashboardShell from "@/components/DashboardShell";
 
 interface XAccount {
   id: string;
@@ -1005,7 +1006,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <DashboardShell>
+      <div>
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -2499,5 +2501,6 @@ export default function SettingsPage() {
         </div>
       </main>
     </div>
+    </DashboardShell>
   );
 }

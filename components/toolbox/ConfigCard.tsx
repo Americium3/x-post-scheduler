@@ -658,9 +658,6 @@ export default function ConfigCard({
           <p className="text-xs text-gray-600 dark:text-gray-400">
             {locale === "zh" ? "预估费用" : "Estimated cost"}:{" "}
             {formatUsdFromCents(estimatedSingleChargeCents)}
-            {tab === "video"
-              ? ` · ${locale === "zh" ? "时长系数" : "duration factor"} x${durationFactor.toFixed(1)}`
-              : ""}
           </p>
           {runCount > 1 && (
             <p className="text-xs text-gray-600 dark:text-gray-400">

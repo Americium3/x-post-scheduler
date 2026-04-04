@@ -3,6 +3,18 @@ import type { VideoSubmitParams, VideoTask } from "./wavespeed";
 
 const BYTEPLUS_BASE = "https://ark.ap-southeast.bytepluses.com/api/v3";
 
+// ── BytePluses Endpoint Registry ─────────────────────────────────────────────
+// Endpoints are inference access points created in BytePluses Console.
+// Each maps to a specific model version.
+export const BYTEPLUSES_ENDPOINTS: Record<string, { id: string; model: string; name: string; capabilities: string[] }> = {
+  "seedance-1.5-pro": {
+    id: "ep-20260402095825-7tnfp",
+    model: "seedance-1-5-pro-251215",
+    name: "Seedance 1.5 Pro",
+    capabilities: ["text-to-video", "image-to-video", "audio"],
+  },
+};
+
 function getApiKey(): string {
   const key = process.env.BYTEPLUSES_API_KEY;
   if (!key) throw new Error("Missing BYTEPLUSES_API_KEY");
@@ -55,7 +67,7 @@ export async function submitBytePlusVideoTask(
   }
 
   const body = {
-    model: "ep-20260402095825-7tnfp",
+    model: BYTEPLUSES_ENDPOINTS["seedance-1.5-pro"].id,
     content,
   };
 
@@ -130,32 +142,30 @@ export async function getBytePlusVideoTask(
   const status = String(json.status ?? "running").toLowerCase();
 
   if (status === "succeeded" || status === "completed") {
-    // Extract video URL from the response — handle multiple response shapes
     let videoUrl: string | undefined;
+    const content = json.content as Record<string, unknown> | Array<Record<string, unknown>> | undefined;
 
-    // Shape 1: { output: { content: [...] } }
-    // Shape 2: { content: [...] }
-    const output = json.output as Record<string, unknown> | undefined;
-    const rawContent = output?.content ?? json.content;
-    const content = Array.isArray(rawContent) ? rawContent : [];
+    // Shape 1 (actual): { content: { video_url: "https://..." } }
+    if (content && !Array.isArray(content) && typeof content.video_url === "string") {
+      videoUrl = content.video_url as string;
+    }
 
-    for (const item of content) {
-      if (typeof item !== "object" || !item) continue;
-      const entry = item as Record<string, unknown>;
-      if (entry.type === "video_url") {
-        const videoUrlObj = entry.video_url as Record<string, unknown> | undefined;
-        videoUrl = videoUrlObj?.url as string | undefined;
-        break;
+    // Shape 2: { content: [{ type: "video_url", video_url: { url: "..." } }] }
+    if (!videoUrl && Array.isArray(content)) {
+      for (const item of content) {
+        if (item.type === "video_url") {
+          const obj = item.video_url as Record<string, unknown> | undefined;
+          videoUrl = (obj?.url ?? item.video_url) as string | undefined;
+          break;
+        }
       }
     }
 
-    // Shape 3: direct URL in output
-    if (!videoUrl && output?.video_url) {
-      const obj = output.video_url as Record<string, unknown>;
-      videoUrl = obj?.url as string | undefined;
-    }
-    if (!videoUrl && typeof output?.url === "string") {
-      videoUrl = output.url as string;
+    // Shape 3: { output: { video_url: "..." } }
+    if (!videoUrl) {
+      const output = json.output as Record<string, unknown> | undefined;
+      if (typeof output?.video_url === "string") videoUrl = output.video_url as string;
+      else if (typeof output?.url === "string") videoUrl = output.url as string;
     }
 
     return {
