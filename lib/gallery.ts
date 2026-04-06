@@ -1,5 +1,22 @@
-import { put, del } from "@vercel/blob";
+import { put, del } from "./r2";
 import { prisma } from "./db";
+
+/**
+ * Extract the raw blob URL from a signed proxy URL.
+ * Proxy URLs look like: .../api/toolbox/blob-proxy?u=<encoded-blob-url>&exp=...&sig=...
+ * We store the raw blob URL so it can be re-signed at read time.
+ */
+function extractRawBlobUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (!url.includes("/api/toolbox/blob-proxy")) return url;
+  try {
+    const parsed = new URL(url);
+    const raw = parsed.searchParams.get("u");
+    return raw || url;
+  } catch {
+    return url;
+  }
+}
 
 const RETRYABLE_FETCH_STATUSES = new Set([403, 404, 408, 425, 429, 500, 502, 503, 504]);
 
@@ -31,12 +48,6 @@ async function fetchWithRetry(url: string, attempts = 5, baseDelayMs = 800) {
   throw new Error(
     lastStatus ? `Failed to fetch media (${lastStatus})` : "Failed to fetch media"
   );
-}
-
-function isPrivateStoreAccessError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const message = error.message.toLowerCase();
-  return message.includes("private store") && message.includes("public access");
 }
 
 function getExtFromMime(mimeType: string): string {
@@ -73,21 +84,11 @@ export async function saveToGallery(params: {
   const blobPath = `gallery/${params.userId}/${params.type}/${Date.now()}.${ext}`;
 
   const buffer = Buffer.from(await response.arrayBuffer());
-  let persistedUrl = params.sourceUrl;
-  try {
-    const uploaded = await put(blobPath, buffer, {
-      access: "public",
-      addRandomSuffix: true,
-      contentType: mimeType,
-    });
-    persistedUrl = uploaded.url;
-  } catch (error) {
-    // If Blob store is configured as private, keep feature usable by falling
-    // back to the source URL instead of failing the whole save action.
-    if (!isPrivateStoreAccessError(error)) {
-      throw error;
-    }
-  }
+  const uploaded = await put(blobPath, buffer, {
+    addRandomSuffix: true,
+    contentType: mimeType,
+  });
+  const persistedUrl = uploaded.url;
 
   return prisma.galleryItem.create({
     data: {
@@ -98,7 +99,7 @@ export async function saveToGallery(params: {
       prompt: params.prompt,
       blobUrl: persistedUrl,
       sourceUrl: params.sourceUrl,
-      inputImageUrl: params.inputImageUrl ?? null,
+      inputImageUrl: extractRawBlobUrl(params.inputImageUrl) ?? null,
       generationMeta: params.generationMeta ? JSON.stringify(params.generationMeta) : null,
       aspectRatio: params.aspectRatio ?? null,
       mimeType,
@@ -112,7 +113,7 @@ export async function deleteGalleryItem(itemId: string, userId: string) {
   if (!item || item.userId !== userId) {
     throw new Error("Not found or unauthorized");
   }
-  // Delete from Vercel Blob
+  // Delete from R2 storage
   if (item.blobUrl !== item.sourceUrl) {
     try {
       await del(item.blobUrl);

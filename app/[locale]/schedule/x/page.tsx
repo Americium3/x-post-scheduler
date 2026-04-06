@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { format } from "date-fns";
+import DashboardShell from "@/components/DashboardShell";
 
 /* ------------------------------------------------------------------ */
-/*  X Single Post Form                                                */
+/*  Single Post Form (with A/B Score + Hashtag Optimizer)             */
 /* ------------------------------------------------------------------ */
 
-function XSinglePostForm({
+function SinglePostForm({
   accounts,
   selectedAccountId,
   setSelectedAccountId,
@@ -68,7 +69,6 @@ function XSinglePostForm({
       if (scheduleType === "later") {
         scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
       }
-
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -82,9 +82,8 @@ function XSinglePostForm({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create X post");
+        throw new Error(data.error || "Failed to create post");
       }
-
       router.push(`${prefix}/dashboard`);
       router.refresh();
     } catch (err) {
@@ -186,6 +185,7 @@ function XSinglePostForm({
             {t("charsRemaining", { count: charRemaining })}
           </span>
           <div className="flex items-center gap-3">
+            {/* A/B Score button */}
             <button
               type="button"
               onClick={handleScore}
@@ -194,6 +194,7 @@ function XSinglePostForm({
             >
               {isScoring ? t("scoring") : t("scorePost")}
             </button>
+            {/* Hashtag button */}
             <button
               type="button"
               onClick={handleHashtags}
@@ -205,6 +206,7 @@ function XSinglePostForm({
           </div>
         </div>
 
+        {/* Score result */}
         {score !== null && (
           <div className="mt-3 flex items-start gap-3">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${scoreColor}`}>
@@ -218,6 +220,7 @@ function XSinglePostForm({
           </div>
         )}
 
+        {/* Hashtag suggestion */}
         {hashtagSuggestion && (
           <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
             <p className="text-sm text-purple-800 dark:text-purple-200 whitespace-pre-wrap">
@@ -274,13 +277,13 @@ function XSinglePostForm({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="mb-4">
           <label
-            htmlFor="account"
+            htmlFor="xAccount"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             {t("xAccount")}
           </label>
           <select
-            id="account"
+            id="xAccount"
             value={selectedAccountId}
             onChange={(e) => setSelectedAccountId(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -377,10 +380,10 @@ function XSinglePostForm({
 }
 
 /* ------------------------------------------------------------------ */
-/*  X Thread Form                                                     */
+/*  Thread Form                                                       */
 /* ------------------------------------------------------------------ */
 
-function XThreadForm({
+function ThreadForm({
   accounts,
   selectedAccountId,
   setSelectedAccountId,
@@ -465,6 +468,7 @@ function XThreadForm({
 
   return (
     <div className="space-y-6">
+      {/* Thread prompt */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -539,6 +543,7 @@ function XThreadForm({
         </button>
       </div>
 
+      {/* Thread preview */}
       {tweets.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
@@ -547,6 +552,7 @@ function XThreadForm({
           <div className="space-y-4">
             {tweets.map((tweet, i) => (
               <div key={i} className="relative">
+                {/* Thread connector line */}
                 {i < tweets.length - 1 && (
                   <div className="absolute left-4 top-10 bottom-0 w-0.5 bg-blue-200 dark:bg-blue-800 -mb-4" />
                 )}
@@ -585,6 +591,7 @@ function XThreadForm({
         </div>
       )}
 
+      {/* Error */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-600 dark:text-red-400">{error}</p>
@@ -595,10 +602,10 @@ function XThreadForm({
 }
 
 /* ------------------------------------------------------------------ */
-/*  X Schedule Form                                                   */
+/*  Combined Schedule Form with mode toggle                           */
 /* ------------------------------------------------------------------ */
 
-function XScheduleForm() {
+function ScheduleForm() {
   const t = useTranslations("schedule");
   const [mode, setMode] = useState<"single" | "thread">("single");
   const [accounts, setAccounts] = useState<
@@ -624,6 +631,7 @@ function XScheduleForm() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* Mode toggle */}
       <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-6 w-fit">
         <button
           onClick={() => setMode("single")}
@@ -648,13 +656,13 @@ function XScheduleForm() {
       </div>
 
       {mode === "single" ? (
-        <XSinglePostForm
+        <SinglePostForm
           accounts={accounts}
           selectedAccountId={selectedAccountId}
           setSelectedAccountId={setSelectedAccountId}
         />
       ) : (
-        <XThreadForm
+        <ThreadForm
           accounts={accounts}
           selectedAccountId={selectedAccountId}
           setSelectedAccountId={setSelectedAccountId}
@@ -664,16 +672,21 @@ function XScheduleForm() {
   );
 }
 
-export default function XSchedulePage() {
+/* ------------------------------------------------------------------ */
+/*  Page                                                              */
+/* ------------------------------------------------------------------ */
+
+export default function SchedulePage() {
   const t = useTranslations("schedule");
   const locale = useLocale();
   const prefix = locale === "zh" ? "/zh" : "";
 
   return (
+    <DashboardShell>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
               {t("title")} - X
             </h1>
@@ -704,16 +717,15 @@ export default function XSchedulePage() {
 
       <Suspense
         fallback={
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse">
               <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-48 mb-6"></div>
               <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-32"></div>
-            </div>
           </div>
         }
       >
-        <XScheduleForm />
+          <ScheduleForm />
       </Suspense>
     </div>
+    </DashboardShell>
   );
 }

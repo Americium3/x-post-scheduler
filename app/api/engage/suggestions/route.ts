@@ -69,7 +69,8 @@ export async function GET() {
             content: `You are helping a user engage with their audience on X (Twitter).
 Generate a brief, thoughtful follow-up reply the user could post to their own tweet to boost engagement.
 The reply should: invite further discussion, add a new angle, or ask a follow-up question.
-Keep it under 280 characters. Be conversational and authentic.`,
+Keep it under 280 characters. Be conversational and authentic.
+Write in ${user.language === "zh" ? "Chinese (简体中文)" : "English"}.`,
           },
           {
             role: "user",

@@ -54,7 +54,7 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}));
     const modelId = body.modelId as string | undefined;
-    const locale = body.locale as string | undefined;
+    const locale = (body.locale as string | undefined) || user.language;
 
     const result = await analyzeCampaign({
       name: campaign.name,

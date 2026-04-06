@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth0";
 import { VIDEO_MODELS, I2V_MODELS, isPremiumModel } from "@/lib/wavespeed";
 import { SEEDANCE_VIDEO_MODELS, SEEDANCE_I2V_MODELS } from "@/lib/seedance";
+import { BYTEPLUS_I2V_MODELS } from "@/lib/bytepluses";
 import { submitVideo, detectVideoProvider } from "@/lib/video-provider";
 import { trackWavespeedUsage } from "@/lib/usage-tracking";
 import {
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
 
-  const allVideoModels = [...VIDEO_MODELS, ...I2V_MODELS, ...SEEDANCE_VIDEO_MODELS, ...SEEDANCE_I2V_MODELS];
+  const allVideoModels = [...VIDEO_MODELS, ...I2V_MODELS, ...SEEDANCE_VIDEO_MODELS, ...SEEDANCE_I2V_MODELS, ...BYTEPLUS_I2V_MODELS];
   const validModel = allVideoModels.find((m) => m.id === modelId);
   if (!validModel) {
     return NextResponse.json({ error: "Invalid model" }, { status: 400 });
@@ -136,9 +137,26 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Enhance prompt for Chinese text preservation in I2V when input image may contain Chinese
+  let finalPrompt = prompt;
+  const hasChinese = /[\u4e00-\u9fff]/.test(prompt);
+  if (imageUrl && (hasChinese || /[\u4e00-\u9fff]/.test(imageUrl))) {
+    // If the prompt itself is in Chinese, add a hint to preserve text in the image
+    if (hasChinese && !prompt.includes("preserve") && !prompt.includes("保持")) {
+      finalPrompt = `${prompt}. Preserve all Chinese text/characters visible in the image accurately.`;
+    }
+  } else if (hasChinese) {
+    // T2V with Chinese prompt — hint to render Chinese text correctly
+    if (!prompt.includes("Chinese") && !prompt.includes("中文")) {
+      finalPrompt = `${prompt}. Render any Chinese text/characters clearly and accurately.`;
+    }
+  }
+
+  const provider = detectVideoProvider(modelId);
+
   try {
     const task = await submitVideo(
-      { modelId, prompt, duration, aspectRatio, imageUrl, generateAudio, lockCamera },
+      { modelId, prompt: finalPrompt, duration, aspectRatio, imageUrl, generateAudio, lockCamera },
       useBYOK ? { userSeedanceKey: userSeedanceKey! } : undefined,
     );
 
@@ -171,6 +189,33 @@ export async function POST(request: NextRequest) {
         }
         console.error("Failed to deduct video credits:", creditError);
       }
+    }
+
+    // Save as background MediaTask for cron-based polling
+    try {
+      await prisma.mediaTask.create({
+        data: {
+          userId: user.id,
+          type: "video",
+          modelId,
+          modelLabel: validModel.label,
+          prompt: finalPrompt,
+          mode: imageUrl ? "i2v" : "t2v",
+          duration: duration ?? 5,
+          aspectRatio: aspectRatio ?? "16:9",
+          generateAudio: generateAudio ?? false,
+          lockCamera: lockCamera ?? false,
+          inputImageUrl: imageUrl ?? null,
+          provider,
+          providerTaskId: task.id,
+          providerPollUrl: task.outputs?.[0] ?? null,
+          status: "processing",
+          feeCents: useBYOK ? 0 : getWavespeedFeeCents(modelId, "video"),
+          byok: useBYOK,
+        },
+      });
+    } catch (dbErr) {
+      console.error("Failed to create MediaTask:", dbErr);
     }
 
     try {

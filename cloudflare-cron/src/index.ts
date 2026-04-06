@@ -59,8 +59,13 @@ const worker = {
 
     ctx.waitUntil(
       (async () => {
-        // Every slot (3x/day at 01:00, 13:00, 23:00 UTC): process scheduled posts
-        await safeTrigger(env, "Scheduler", "/api/scheduler");
+        // Every slot (every 2 min): poll background media tasks
+        await safeTrigger(env, "MediaTasks", "/api/toolbox/tasks/process");
+
+        // Daily slots (01:00, 13:00, 23:00 UTC): scheduled posts + daily jobs
+        if (hour === 1 || hour === 13 || hour === 23) {
+          await safeTrigger(env, "Scheduler", "/api/scheduler");
+        }
 
         // Process recurring YouTube schedules
         await safeTrigger(env, "Recurring-YouTube", "/api/cron/recurring-youtube");

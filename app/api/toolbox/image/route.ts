@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth0";
 import { submitImageTask, IMAGE_MODELS, isPremiumModel } from "@/lib/wavespeed";
+import { OPENROUTER_IMAGE_MODELS, isOpenRouterImageModel, submitOpenRouterImageTask } from "@/lib/openrouter-media";
 import { prisma } from "@/lib/db";
 import { isVerifiedMember } from "@/lib/subscription";
 import { trackWavespeedUsage } from "@/lib/usage-tracking";
@@ -89,7 +90,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const validModel = IMAGE_MODELS.find((m) => m.id === modelId);
+  const validModel = IMAGE_MODELS.find((m) => m.id === modelId)
+    || OPENROUTER_IMAGE_MODELS.find((m) => m.id === modelId);
   if (!validModel) {
     return NextResponse.json({ error: "Invalid model" }, { status: 400 });
   }
@@ -125,15 +127,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // submitImageTask uses enable_sync_mode — returns completed result directly
-    const task = await submitImageTask({
-      modelId,
-      prompt: trimmedPrompt || "Image enhancement",
-      mode: submitMode,
-      imageUrl: trimmedImageUrl || undefined,
-      imageUrls: validImageUrls.length > 0 ? validImageUrls : undefined,
-      aspectRatio,
-    });
+    // Route to OpenRouter or Wavespeed based on model prefix
+    const task = isOpenRouterImageModel(modelId)
+      ? await submitOpenRouterImageTask({
+          modelId,
+          prompt: trimmedPrompt || "Generate an image",
+          aspectRatio,
+        })
+      : await submitImageTask({
+          modelId,
+          prompt: trimmedPrompt || "Image enhancement",
+          mode: submitMode,
+          imageUrl: trimmedImageUrl || undefined,
+          imageUrls: validImageUrls.length > 0 ? validImageUrls : undefined,
+          aspectRatio,
+        });
     try {
       await deductWavespeedCredits({
         userId: user.id,

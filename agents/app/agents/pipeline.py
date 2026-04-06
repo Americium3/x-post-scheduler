@@ -59,5 +59,6 @@ async def run_pipeline(
         content=editor_result["final_content"],
         suggestions=editor_result.get("suggestions", []),
         media_asset_id=editor_result.get("media_asset_id"),
+        media_asset_ids=editor_result.get("media_asset_ids", []),
         pipeline_log=pipeline_log,
     )

@@ -1363,7 +1363,7 @@ export default function LandingEditor({
             </Link>
           ) : (
             <Link
-              href={`${prefix}/toolbox`}
+              href={`${prefix}/media-studio/video`}
               className="inline-flex items-center px-5 py-2.5 rounded-lg border border-blue-300 text-blue-700 dark:text-blue-300 dark:border-blue-600 text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
               {t("editorGoMediaStudio")}

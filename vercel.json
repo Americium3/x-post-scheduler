@@ -1,16 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/process-video-jobs",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/publish-scheduled",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/recurring-youtube",
-      "schedule": "*/10 * * * *"
-    }
-  ]
-}
+{}

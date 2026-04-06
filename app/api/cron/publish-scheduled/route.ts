@@ -114,6 +114,8 @@ async function handleRequest(request: NextRequest) {
         else if (post.youtubeAccountId && post.youtubeAccount) {
           const youtubeAccount = post.youtubeAccount;
           const credentials = {
+            clientId: decrypt(youtubeAccount.clientId),
+            clientSecret: decrypt(youtubeAccount.clientSecret),
             refreshToken: decrypt(youtubeAccount.refreshToken),
             accessToken: youtubeAccount.accessToken ? decrypt(youtubeAccount.accessToken) : undefined,
             accessTokenExpiry: youtubeAccount.accessTokenExpiry || undefined,
@@ -148,6 +150,7 @@ async function handleRequest(request: NextRequest) {
               postedAt: result.success ? new Date() : null,
               youtubeVideoId: result.videoId || null,
               error: result.error || null,
+              mediaUrls: null,
             },
           });
 

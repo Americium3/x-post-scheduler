@@ -7,8 +7,19 @@
  */
 import { generateText } from "ai";
 import { gateway } from "@ai-sdk/gateway";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { resolveTextModel } from "./ai-models";
 import type { TokenUsage } from "./usage-tracking";
+
+function getModel(modelId: string) {
+  if (modelId.startsWith("openrouter/")) {
+    const openrouter = createOpenRouter({
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+    return openrouter(modelId.replace("openrouter/", ""));
+  }
+  return gateway(modelId);
+}
 
 export interface GatewayGenerateResult {
   success: boolean;
@@ -120,7 +131,7 @@ export async function generateTweetViaGateway(params: {
   const model = resolveTextModel(params.modelId);
   try {
     const result = await generateText({
-      model: gateway(model.id),
+      model: getModel(model.id),
       system: buildSystemPrompt(
         params.knowledgeContext,
         params.language,
@@ -179,7 +190,7 @@ export async function generateSuggestionsViaGateway(params: {
   const count = params.count ?? 3;
   try {
     const result = await generateText({
-      model: gateway(model.id),
+      model: getModel(model.id),
       system: buildSystemPrompt(
         params.knowledgeContext,
         params.language,
@@ -238,7 +249,7 @@ export async function generateLandingTweetViaGateway(params: {
   const model = resolveTextModel(params.modelId);
   try {
     const result = await generateText({
-      model: gateway(model.id),
+      model: getModel(model.id),
       system: `You are a social media expert who writes engaging tweets for X (Twitter).
 ${params.language ? `IMPORTANT: Write in ${params.language}.` : ""}
 Rules: Under 280 characters. Engaging and authentic. 1-2 hashtags max. 1-2 emojis max. No clichés.`,

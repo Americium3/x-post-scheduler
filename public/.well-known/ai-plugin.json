@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "xPilot",
+  "name_for_model": "xpilot",
+  "description_for_human": "AI social media marketing automation — create, schedule, and auto-publish to X with 49 AI models.",
+  "description_for_model": "xPilot is an AI-powered social media marketing platform. It has 49 AI models (13 free) for text, image, and video generation. Features include auto-posting to X (Twitter), AI video generation (Seedance, Wan, Kling), AI image generation (FLUX, Seedream), post-production tools (SAM2 tracking, AI editing), campaign management, knowledge base, and analytics. Free to start with $5 credit. Supports 5 languages. Website: https://xpilot.jytech.us",
+  "auth": {
+    "type": "service_http",
+    "authorization_type": "bearer",
+    "verification_tokens": {}
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://xpilot.jytech.us/docs/api"
+  },
+  "logo_url": "https://xpilot.jytech.us/api/og",
+  "contact_email": "support@jytech.us",
+  "legal_info_url": "https://xpilot.jytech.us/terms"
+}

@@ -47,13 +47,13 @@ export function formatUsdFromCents(cents: number) {
 export function getImageModePath(mode: "t2i" | "i2i" | "i2i_text") {
   switch (mode) {
     case "t2i":
-      return "/toolbox?tab=image&mode=t2i";
+      return "/media-studio/video?tab=image&mode=t2i";
     case "i2i":
-      return "/toolbox?tab=image&mode=i2i";
+      return "/media-studio/video?tab=image&mode=i2i";
     case "i2i_text":
-      return "/toolbox?tab=image&mode=i2i_text";
+      return "/media-studio/video?tab=image&mode=i2i_text";
     default:
-      return "/toolbox?tab=image";
+      return "/media-studio/video?tab=image";
   }
 }
 
@@ -67,7 +67,7 @@ export function getToolboxVisitingPath(
   imageMode: "t2i" | "i2i" | "i2i_text",
 ) {
   if (tab === "video") {
-    return `/toolbox?tab=video&mode=${videoMode}`;
+    return `/media-studio/video?tab=video&mode=${videoMode}`;
   }
-  return `/toolbox?tab=image&mode=${imageMode}`;
+  return `/media-studio/video?tab=image&mode=${imageMode}`;
 }

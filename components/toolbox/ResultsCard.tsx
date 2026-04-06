@@ -126,7 +126,7 @@ export default function ResultsCard({
           )}
           {saveStatus === "saved" && (
             <a
-              href={`${prefix}/gallery`}
+              href={`${prefix}/media-studio/gallery`}
               className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full hover:underline"
             >
               已保存到 Gallery ✓
@@ -218,7 +218,7 @@ export default function ResultsCard({
                 Download
               </a>
               <a
-                href={`${prefix}/schedule?mediaUrl=${encodeURIComponent(savedBlobUrl ?? outputUrl)}`}
+                href={`${prefix}/media-studio/posts?mediaUrl=${encodeURIComponent(savedBlobUrl ?? outputUrl)}`}
                 className="flex-1 text-center py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
                 Use in Post

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocale } from "next-intl";
 import ToolboxHeader from "@/components/toolbox/ToolboxHeader";
+import DashboardShell from "@/components/DashboardShell";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -495,20 +496,19 @@ export default function VideoStitchPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ToolboxHeader
-        uiText={{ ...t }}
-        prefix={prefix}
-        locale={locale}
-        creditLoading={creditLoading}
-        creditBalance={creditBalance}
-        isTrial={isTrial}
-      />
-
+    <DashboardShell>
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <ToolboxHeader
+          uiText={{ ...t }}
+          prefix={prefix}
+          locale={locale}
+          creditLoading={creditLoading}
+          creditBalance={creditBalance}
+          isTrial={isTrial}
+        />
         {/* Back link */}
         <a
-          href={`${prefix}/toolbox`}
+          href={`${prefix}/media-studio/video`}
           className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
           {t.backToToolbox}
@@ -810,6 +810,6 @@ export default function VideoStitchPage() {
           </div>
         </div>
       </main>
-    </div>
+    </DashboardShell>
   );
 }

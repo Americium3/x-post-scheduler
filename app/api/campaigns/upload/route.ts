@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { put } from "@/lib/r2";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";
-import { getBlobToken } from "@/lib/blob-config";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB
 
@@ -58,14 +57,11 @@ export async function POST(request: NextRequest) {
   const ext = getExtensionFromMime(file.type);
   const blobPath = `campaigns/${user.id}/${Date.now()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  const publicBlobToken = getBlobToken("public");
 
   try {
     const uploaded = await put(blobPath, buffer, {
-      access: "public",
       addRandomSuffix: true,
       contentType: file.type,
-      token: publicBlobToken,
     });
     return NextResponse.json({
       url: uploaded.url,
@@ -74,25 +70,10 @@ export async function POST(request: NextRequest) {
       fileSize: file.size,
     });
   } catch (error) {
-    // Fallback to private store when public access is not available
-    try {
-      const uploaded = await put(blobPath, buffer, {
-        access: "private",
-        addRandomSuffix: true,
-        contentType: file.type,
-      });
-      return NextResponse.json({
-        url: uploaded.url,
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-      });
-    } catch (fallbackError) {
-      console.error("[campaigns/upload] Error:", fallbackError);
-      return NextResponse.json(
-        { error: fallbackError instanceof Error ? fallbackError.message : "Upload failed" },
-        { status: 500 }
-      );
-    }
+    console.error("[campaigns/upload] Error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Upload failed" },
+      { status: 500 }
+    );
   }
 }

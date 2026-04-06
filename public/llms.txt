@@ -1,0 +1,52 @@
+# xPilot — AI Social Media Marketing Automation Copilot
+# https://xpilot.jytech.us
+
+> xPilot is an AI-powered social media marketing platform that helps creators, marketers, and small teams create, schedule, and auto-publish content to X (Twitter). It features 49 AI models (13 free), AI video and image generation, post-production tools, campaign management, and multi-language support.
+
+## Key Features
+- **49 AI Models**: Text (GPT-4o, Claude, Gemini, Llama, DeepSeek), Image (FLUX, Seedream, Dreamina), Video (Seedance, Wan, Kling)
+- **13 Free Models**: Including FLUX.2 Pro, Seedream 4.5, Llama 3.3 70B, DeepSeek V3, Gemma 3 27B
+- **Auto-Post Scheduling**: Smart scheduling and automatic publishing to X (Twitter)
+- **AI Video Generation**: Text-to-video and image-to-video with multiple models
+- **AI Image Generation**: Text-to-image and image-to-image editing
+- **Post-Production Tools**: Text overlay, area masking, SAM2 smart tracking, AI video editing (Wan 2.7 VideoEdit)
+- **Background Processing**: Submit tasks and close the page — results auto-saved
+- **Campaign Management**: Budget estimation, client management, materials
+- **Knowledge Base**: Import content to maintain brand voice
+- **Analytics**: Post performance, engagement metrics, follower tracking
+- **Multi-Language**: English, Chinese, Spanish, Japanese, Korean
+- **Free to Start**: $5 credit included, no credit card required
+
+## Pricing
+- Free tier: 13 free AI models, $5 starting credit
+- Pay-as-you-go: Video from $0.10/run, Image from $0.40/run, Text from $0.50/1M tokens
+- Subscription plans available for advanced features
+
+## Links
+- Website: https://xpilot.jytech.us
+- API Documentation: https://xpilot.jytech.us/docs/api
+- Model Documentation: https://xpilot.jytech.us/docs/models
+- Changelog: https://xpilot.jytech.us/changelog
+- Pricing: https://xpilot.jytech.us/pricing
+- Gallery: https://xpilot.jytech.us/media-studio/gallery
+
+## Company
+- Built by JY Tech, based in the San Francisco Bay Area
+- Website: https://jytech.us
+- Contact: https://x.com/xpilot_jytech
+
+## Use Cases
+- Social media managers automating content creation and posting
+- Small businesses generating marketing videos and images with AI
+- Content creators producing multi-format content (text, image, video)
+- Marketing agencies managing campaigns across multiple accounts
+- Brands maintaining consistent voice with knowledge base-driven generation
+
+## Competitors & Alternatives
+xPilot combines features of Buffer (scheduling), Canva (image creation), and Runway (video generation) into one AI-powered platform. Unlike standalone tools, xPilot offers end-to-end workflow from content creation to publishing.
+
+## Technical Details
+- Built with Next.js, React, TypeScript
+- AI providers: OpenAI, Anthropic, Google, Meta, ByteDance, Alibaba, Mistral, xAI, NVIDIA
+- Storage: Cloudflare R2
+- Deployment: Vercel + Cloudflare Workers

@@ -422,7 +422,7 @@ async function getLatestStoredMediaIndustryReportRaw(
       "updatedAt",
       "usedAi"
     FROM "MediaIndustryReport"
-    WHERE "period" = ${period}
+    WHERE "period" = ${period} AND "reportDate" <= NOW()
     ORDER BY "reportDate" DESC
     LIMIT 1
   `;
@@ -455,7 +455,7 @@ async function listStoredMediaIndustryReportsRaw(
       "updatedAt",
       "usedAi"
     FROM "MediaIndustryReport"
-    WHERE "period" = ${period}
+    WHERE "period" = ${period} AND "reportDate" <= NOW()
     ORDER BY "reportDate" DESC
     LIMIT ${limit}
   `;
@@ -1306,7 +1306,7 @@ export async function getLatestStoredMediaIndustryReport(
 
   try {
     row = (await delegate.findFirst({
-      where: { period },
+      where: { period, reportDate: { lte: new Date() } },
       orderBy: { reportDate: "desc" },
     })) as typeof row;
   } catch (error) {
@@ -1380,7 +1380,7 @@ export async function listStoredMediaIndustryReports(
 
   try {
     const rows = (await delegate.findMany({
-      where: { period },
+      where: { period, reportDate: { lte: new Date() } },
       orderBy: { reportDate: "desc" },
       take: safeLimit,
     })) as MediaIndustryReportRow[];

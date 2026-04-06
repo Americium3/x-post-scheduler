@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import DashboardShell from "@/components/DashboardShell";
 
 interface Segment {
   index: number;
@@ -298,7 +299,7 @@ export default function VideoJobsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <DashboardShell>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -311,10 +312,10 @@ export default function VideoJobsPage() {
             </p>
           </div>
           <Link
-            href="/toolbox"
+            href="/media-studio/video"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            ← Back to Toolbox
+            ← Back to Multimedia
           </Link>
         </div>
 
@@ -383,7 +384,7 @@ export default function VideoJobsPage() {
               No video generation jobs found
             </p>
             <Link
-              href="/toolbox"
+              href="/media-studio/video"
               className="text-blue-600 dark:text-blue-400 hover:underline mt-2"
             >
               Start generating →
@@ -986,6 +987,6 @@ export default function VideoJobsPage() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardShell>
   );
 }

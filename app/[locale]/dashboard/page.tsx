@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getRecentTweets, batchTweetMediaUrls } from "@/lib/x-client";
 import { getAuthenticatedUser } from "@/lib/auth0";
@@ -6,11 +5,12 @@ import { getUserXCredentials } from "@/lib/user-credentials";
 import { buildSignedBlobProxyUrl } from "@/lib/blob-proxy";
 import { format } from "date-fns";
 import PostList from "@/components/PostList";
-import UserMenu from "@/components/UserMenu";
 import AccountStats from "@/components/AccountStats";
 import MediaDailyWidget from "@/components/MediaDailyWidget";
 import EngageSuggestions from "@/components/EngageSuggestions";
 import ReferralAttributor from "@/components/ReferralAttributor";
+import DashboardShell from "@/components/DashboardShell";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import { redirect } from "next/navigation";
 import { headers as nextHeaders } from "next/headers";
 import { getTranslations, getLocale, setRequestLocale } from "next-intl/server";
@@ -153,7 +153,6 @@ export default async function Dashboard({
   setRequestLocale(localeParam);
 
   const t = await getTranslations("dashboard");
-  const tNav = await getTranslations("nav");
   const locale = await getLocale();
   const user = await getAuthenticatedUser();
   if (!user) {
@@ -177,86 +176,12 @@ export default async function Dashboard({
   const { mergedPosts } = await getPosts(user.id, origin);
   const schedules = await getRecurringSchedules(user.id);
 
-  const prefix = locale === "zh" ? "/zh" : "";
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <Link
-              href={prefix || "/"}
-              className="hover:opacity-80 transition-opacity"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-wordmark.svg" alt="xPilot" width={180} height={36} style={{ height: 36, width: 'auto' }} />
-            </Link>
-            <div className="flex items-center gap-4">
-              <nav className="hidden md:flex items-center gap-3 text-sm">
-                <Link
-                  href={`${prefix}/dashboard`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {locale === "zh" ? "仪表盘" : "Dashboard"}
-                </Link>
-                <Link
-                  href={`${prefix}/gallery`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {tNav("gallery")}
-                </Link>
-                <Link
-                  href={`${prefix}/toolbox`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {tNav("toolbox")}
-                </Link>
-                <Link
-                  href={`${prefix}/schedule`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {tNav("compose")}
-                </Link>
-                <Link
-                  href={`${prefix}/recurring`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {tNav("autoPost")}
-                </Link>
-                <Link
-                  href={`${prefix}/knowledge`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {tNav("knowledge")}
-                </Link>
-                <Link
-                  href={`${prefix}/campaigns`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {tNav("campaigns")}
-                </Link>
-                <Link
-                  href={`${prefix}/analytics`}
-                  className="px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {tNav("analytics")}
-                </Link>
-                <Link
-                  href={`${prefix}/news`}
-                  className="px-2 py-1 rounded-md text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                >
-                  {tNav("intelligence")}
-                </Link>
-              </nav>
-
-              <UserMenu hideNavigationLinksOnDesktop />
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <DashboardShell>
       <ReferralAttributor />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AnnouncementBanner />
+
         {/* Media Daily Widget */}
         <MediaDailyWidget locale={locale} />
 
@@ -310,6 +235,6 @@ export default async function Dashboard({
           <PostList initialPosts={mergedPosts} />
         </div>
       </main>
-    </div>
+    </DashboardShell>
   );
 }

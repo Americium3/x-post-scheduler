@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiAuth } from "@/lib/api-auth";
 import { VIDEO_MODELS, I2V_MODELS, IMAGE_MODELS } from "@/lib/wavespeed";
+import { OPENROUTER_IMAGE_MODELS } from "@/lib/openrouter-media";
 import { SEEDANCE_VIDEO_MODELS, SEEDANCE_I2V_MODELS } from "@/lib/seedance";
 import { TEXT_MODELS } from "@/lib/ai-models";
 import { getWavespeedFeeCents } from "@/lib/credits";
@@ -71,13 +72,22 @@ export async function GET(request: NextRequest) {
     })),
   ];
 
-  const image = IMAGE_MODELS.map((m) => ({
-    id: m.id,
-    label: m.label,
-    tier: m.tier,
-    cost_cents: getWavespeedFeeCents(m.id, "image"),
-    type: "image",
-  }));
+  const image = [
+    ...IMAGE_MODELS.map((m) => ({
+      id: m.id,
+      label: m.label,
+      tier: m.tier,
+      cost_cents: getWavespeedFeeCents(m.id, "image"),
+      type: "image",
+    })),
+    ...OPENROUTER_IMAGE_MODELS.map((m) => ({
+      id: m.id,
+      label: m.label,
+      tier: m.tier,
+      cost_cents: 0,
+      type: "image",
+    })),
+  ];
 
   return NextResponse.json({
     models: { text, video: [...video, ...i2v], image },

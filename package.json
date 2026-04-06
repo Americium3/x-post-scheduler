@@ -9,12 +9,18 @@
     "lint": "eslint",
     "test:e2e": "playwright test",
     "scheduler": "npx tsx scripts/scheduler.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "mcp:dev": "cd workers/mcp && npm run dev",
+    "mcp:deploy": "cd workers/mcp && npm run deploy"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.54",
     "@auth0/nextjs-auth0": "^4.14.1",
+    "@aws-sdk/client-s3": "^3.1024.0",
+    "@getbrevo/brevo": "^5.0.3",
     "@google/generative-ai": "^0.24.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@openrouter/ai-sdk-provider": "^2.3.3",
     "@prisma/client": "^6.19.2",
     "@tailwindcss/typography": "^0.5.19",
     "@types/fluent-ffmpeg": "^2.1.28",
@@ -34,9 +40,11 @@
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "recharts": "^3.7.0",
+    "replicate": "^1.4.0",
     "stripe": "^20.3.1",
     "twitter-api-v2": "^1.29.0",
-    "vercel": "^50.32.5"
+    "vercel": "^50.32.5",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

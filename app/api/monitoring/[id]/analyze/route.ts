@@ -56,7 +56,7 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const xAccountId = body.xAccountId as string | undefined;
   const modelId = body.modelId as string | undefined;
-  const locale = body.locale as string | undefined;
+  const locale = (body.locale as string | undefined) || user.language;
 
   // 5. Get X credentials
   const xCreds = await getUserXCredentials(user.id, xAccountId);

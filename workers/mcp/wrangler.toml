@@ -1,0 +1,12 @@
+name = "xpilot-mcp"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+BASE_URL = "https://xpilot.jytech.us"
+
+# Custom domain (uncomment when DNS is configured)
+# [[routes]]
+# pattern = "mcp.xpilot.jytech.us"
+# custom_domain = true

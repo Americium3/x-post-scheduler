@@ -28,14 +28,37 @@ export async function GET() {
     return unauthorizedResponse();
   }
 
-  const schedules = await prisma.recurringYoutubeSchedule.findMany({
-    where: {
-      userId: user.id,
-    },
-    orderBy: { nextRunAt: "asc" },
-  });
+  const [schedules, recurringUsage, dbUser] = await Promise.all([
+    prisma.recurringYoutubeSchedule.findMany({
+      where: {
+        userId: user.id,
+      },
+      orderBy: { nextRunAt: "asc" },
+    }),
+    prisma.usageEvent.aggregate({
+      where: {
+        userId: user.id,
+        source: { startsWith: "recurring_youtube_" },
+      },
+      _sum: { promptTokens: true, completionTokens: true, totalTokens: true },
+      _count: { _all: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: { creditBalanceCents: true },
+    }),
+  ]);
 
-  return NextResponse.json({ schedules });
+  return NextResponse.json({
+    schedules,
+    balanceCents: dbUser?.creditBalanceCents ?? 0,
+    usage: {
+      requests: recurringUsage._count._all,
+      promptTokens: recurringUsage._sum.promptTokens ?? 0,
+      completionTokens: recurringUsage._sum.completionTokens ?? 0,
+      totalTokens: recurringUsage._sum.totalTokens ?? 0,
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {

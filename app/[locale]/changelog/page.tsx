@@ -37,6 +37,392 @@ export default async function ChangelogPage({
 
         {/* Timeline */}
         <div className="space-y-8">
+
+          {/* 2026-04 MCP Support */}
+          <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                  {isZh ? "新功能" : "New Feature"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年4月4日" : "April 4, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "xPilot 现已支持 MCP 协议"
+                  : "xPilot Now Supports MCP (Model Context Protocol)"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot 现已支持 MCP (Model Context Protocol)，您可以直接在 Claude Desktop、Claude Code 等 AI 工具中调用 xPilot 的全部 AI 能力 — 无需离开您的工作流。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">什么是 MCP？</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      MCP (Model Context Protocol) 是由 Anthropic 推出的开放协议，让 AI 助手能够连接外部工具和数据源。通过 MCP，您可以在对话中直接让 AI 帮您生成图片、视频和社交媒体帖子。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">可用工具</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>list_models</strong> — 查看所有可用 AI 模型（49 款模型，13 款免费）</li>
+                      <li><strong>generate_image</strong> — AI 文生图（支持 FLUX、Seedream 等免费模型）</li>
+                      <li><strong>generate_video</strong> — AI 文生视频/图生视频（Seedance、Wan、Kling）</li>
+                      <li><strong>generate_post</strong> — AI 生成社交媒体帖子</li>
+                      <li><strong>check_task</strong> — 查询生成任务状态</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">两种连接方式</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Next.js 端点</strong> — <code className="text-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">https://xpilot.jytech.us/api/mcp</code></li>
+                      <li><strong>Cloudflare Worker</strong> — 全球边缘部署，更快响应，需 API Key 认证</li>
+                    </ul>
+
+                    <p className="text-gray-700 dark:text-gray-300">
+                      <Link href={`/${locale}/docs/mcp`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">查看 MCP 接入文档 →</Link>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot now supports MCP (Model Context Protocol), allowing you to use xPilot&apos;s full AI capabilities directly from Claude Desktop, Claude Code, and other MCP-compatible AI tools — without leaving your workflow.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">What is MCP?</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      MCP (Model Context Protocol) is an open protocol by Anthropic that lets AI assistants connect to external tools and data sources. With MCP, you can ask AI to generate images, videos, and social media posts in a conversation.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Available Tools</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>list_models</strong> — Browse all available AI models (49 models, 13 free)</li>
+                      <li><strong>generate_image</strong> — AI text-to-image (free FLUX, Seedream models)</li>
+                      <li><strong>generate_video</strong> — AI text-to-video & image-to-video (Seedance, Wan, Kling)</li>
+                      <li><strong>generate_post</strong> — AI social media post generation</li>
+                      <li><strong>check_task</strong> — Check generation task status</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Two Connection Options</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Next.js Endpoint</strong> — <code className="text-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">https://xpilot.jytech.us/api/mcp</code></li>
+                      <li><strong>Cloudflare Worker</strong> — Edge-deployed globally, faster response, requires API Key</li>
+                    </ul>
+
+                    <p className="text-gray-700 dark:text-gray-300">
+                      <Link href="/docs/mcp" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Read the MCP setup guide →</Link>
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 2026-04 Weekly Product Update */}
+          <div className="relative pl-8 pb-8 border-l-2 border-purple-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-purple-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">
+                  {isZh ? "产品更新" : "Product Update"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年4月4日" : "April 4, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "xPilot Media Studio 全面升级"
+                  : "xPilot Media Studio — Major Upgrade"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      本周我们对 xPilot 进行了全面升级，带来全新的 Media Studio 工作区、后台任务系统、后期制作工具等多项重要更新。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">全新 Media Studio 工作区</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      我们重新设计了内容创作中心，将所有创作工具整合到统一的 Media Studio 下：
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>视频生成</strong> — AI 视频生成、视频拼接、长视频任务</li>
+                      <li><strong>图片生成</strong> — 多款 AI 模型，支持文生图、图生图</li>
+                      <li><strong>帖子创作</strong> — 社交媒体帖子编写与调度</li>
+                      <li><strong>作品展示</strong> — 社区作品浏览、发布与管理</li>
+                      <li><strong>素材管理</strong> — 统一查看所有任务状态与历史素材</li>
+                      <li><strong>后期制作</strong> — 文字叠加、遮罩、智能跟踪、AI 编辑</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">后台无人值守视频生成</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      提交视频生成任务后，您可以立即关闭页面。系统会在后台自动完成处理，并将结果保存到您的素材库中。
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>每 2 分钟自动检查任务进度</li>
+                      <li>完成后自动保存到 Cloudflare R2 云存储</li>
+                      <li>在素材管理中查看进度条和预估时间</li>
+                      <li>支持任务重试</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">后期制作工具</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      全新后期制作工具让您无需离开平台即可完善 AI 生成的视频：
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>文字叠加</strong> — 添加中文标题、字幕，支持多种字体和样式</li>
+                      <li><strong>区域遮罩</strong> — 框选区域进行模糊或颜色填充</li>
+                      <li><strong>SAM2 智能跟踪</strong> — 点击目标即可全视频自动跟踪，支持内容替换</li>
+                      <li><strong>AI 智能编辑</strong> — 用自然语言描述修改需求（由 Wan 2.7 VideoEdit 驱动）</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">多语言支持</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot 现已支持五种语言：English、中文、Español、日本語、한국어。您可以在设置页面或左下角语言切换器中更改。
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">其他改进</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>视频生成成本降低 — 费率乘数从 5x 调整为 2x</li>
+                      <li>BytePluses API 集成 — Seedance 1.5 Pro 优先使用 BytePluses 通道</li>
+                      <li>侧边栏导航优化 — 更清晰的层级结构与活跃状态指示</li>
+                      <li>作品详情页两栏布局 — 视频预览 + 参数信息并排显示</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      This week we shipped a major upgrade to xPilot, including a redesigned Media Studio workspace, background task processing, post-production tools, and more.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">New Media Studio Workspace</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      All creative tools are now organized under a unified Media Studio hub:
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Video</strong> — AI video generation, stitching, and long-form video jobs</li>
+                      <li><strong>Images</strong> — Multiple AI models for text-to-image and image-to-image</li>
+                      <li><strong>Posts</strong> — Compose and schedule social media posts</li>
+                      <li><strong>Gallery</strong> — Browse community works, publish and manage your creations</li>
+                      <li><strong>Materials</strong> — Unified view of all task statuses and generated assets</li>
+                      <li><strong>Post Production</strong> — Text overlay, masking, smart tracking, and AI editing</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Background Video Processing</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      Submit a video generation task and close the page — the system handles everything automatically.
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>Tasks are polled every 2 minutes automatically</li>
+                      <li>Completed videos are saved to Cloudflare R2 cloud storage</li>
+                      <li>Track progress with live progress bars and time estimates</li>
+                      <li>Retry failed tasks with one click</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Post-Production Tools</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3">
+                      New post-production tools let you refine AI-generated videos without leaving the platform:
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li><strong>Text Overlay</strong> — Add titles and subtitles with Chinese font support</li>
+                      <li><strong>Area Masking</strong> — Select regions to blur or fill with solid color</li>
+                      <li><strong>SAM2 Smart Tracking</strong> — Click to track objects across all frames, with content replacement</li>
+                      <li><strong>AI Smart Edit</strong> — Describe changes in natural language (powered by Wan 2.7 VideoEdit)</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Multi-Language Support</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      xPilot now supports five languages: English, Chinese, Spanish, Japanese, and Korean. Switch in Settings or via the language selector.
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Other Improvements</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-1.5 mb-4">
+                      <li>Video generation costs reduced — pricing multiplier lowered from 5x to 2x</li>
+                      <li>BytePluses API integration — Seedance 1.5 Pro now routes through BytePluses with Wavespeed fallback</li>
+                      <li>Sidebar navigation redesigned with clearer hierarchy and active state indicators</li>
+                      <li>Gallery detail page now uses a two-column layout for better readability</li>
+                    </ul>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 2026-04 Storage Migration & Data Loss Notice */}
+          <div className="relative pl-8 pb-8 border-l-2 border-red-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-red-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                  {isZh ? "重要公告" : "Important Notice"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年4月4日" : "April 4, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "存储迁移公告 & 历史素材丢失说明"
+                  : "Storage Migration Notice & Historical Data Loss"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">发生了什么？</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      我们发现在 2026 年 2 月 21 日至 3 月 28 日期间生成的部分图片和视频素材无法正常访问。
+                      经过调查，问题原因如下：
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li>平台此前使用 Vercel Blob 作为文件存储服务，但由于 Hobby 计划的存储限制（500MB），导致部分文件上传失败</li>
+                      <li>上传失败后，系统回退保存了 AI 模型提供商的临时 CDN 链接（有效期约 2 周）</li>
+                      <li>这些临时链接过期后，相关素材便无法再访问</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">我们做了什么？</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li><strong>存储迁移至 Cloudflare R2</strong> — 我们已将文件存储从 Vercel Blob 完整迁移至 Cloudflare R2。R2 提供 10GB 免费存储空间，且无出站流量费用，彻底解决了存储容量不足的问题</li>
+                      <li><strong>后台任务处理机制</strong> — 新增了后台任务系统，所有生成的视频和图片会立即从 AI 提供商下载并永久保存至我们自有的 R2 存储空间，不再依赖临时链接</li>
+                      <li><strong>清理了无法访问的历史记录</strong> — 已移除 63 条因链接过期而无法访问的素材记录，避免在素材管理中显示损坏内容</li>
+                      <li><strong>防删除保护</strong> — 输入文件清理机制现在会检查是否被素材库引用，确保不会误删仍在使用的文件</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">补偿措施</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      对于此次数据丢失给您造成的不便，我们深感歉意。为表示诚意，我们将为<strong>每位受影响的用户赠送 $10 平台点数</strong>，
+                      可用于视频生成、图片生成等所有 AI 服务。点数将在近日自动发放至您的账户。
+                    </p>
+
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-4">
+                      <p className="text-green-800 dark:text-green-300 font-medium">
+                        保障承诺：迁移至 R2 后，您的所有新素材都将安全存储在我们自有的云存储空间中，不会再出现类似的数据丢失问题。
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-4 mb-2">What Happened?</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      We discovered that some images and videos generated between February 21 and March 28, 2026 are no longer accessible.
+                      After investigation, the root cause was identified:
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li>The platform previously used Vercel Blob for file storage, but the Hobby plan&apos;s 500MB storage limit caused some uploads to fail</li>
+                      <li>When uploads failed, the system fell back to saving temporary CDN URLs from AI model providers (valid for ~2 weeks)</li>
+                      <li>Once these temporary links expired, the associated media became inaccessible</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">What We Did</h3>
+                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-300 space-y-2 mb-4">
+                      <li><strong>Migrated to Cloudflare R2</strong> — We&apos;ve fully migrated file storage from Vercel Blob to Cloudflare R2, which provides 10GB free storage with zero egress fees</li>
+                      <li><strong>Background task processing</strong> — All generated videos and images are now immediately downloaded from AI providers and permanently saved to our own R2 storage</li>
+                      <li><strong>Cleaned up broken records</strong> — Removed 63 gallery entries with expired URLs to prevent broken content from appearing in your materials</li>
+                      <li><strong>Delete protection</strong> — Input file cleanup now checks for gallery references before deleting, preventing accidental removal of files still in use</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-2">Compensation</h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      We sincerely apologize for the inconvenience caused by this data loss. As a gesture of goodwill,
+                      we are crediting <strong>$10 in platform credits to every affected user</strong>, usable for video generation,
+                      image generation, and all AI services. Credits will be automatically added to your account shortly.
+                    </p>
+
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-4">
+                      <p className="text-green-800 dark:text-green-300 font-medium">
+                        Our commitment: After migrating to R2, all your new media is securely stored in our own cloud storage. This type of data loss will not happen again.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 2026-03 Free AI Models */}
+          <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
+            <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                  {isZh ? "新功能" : "New Feature"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {isZh ? "2026年3月25日" : "March 25, 2026"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                {isZh
+                  ? "免费 AI 模型正式上线!"
+                  : "Free AI Models Now Available!"}
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {isZh ? (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      我们很高兴地宣布，xPilot 现已集成多款<strong>完全免费</strong>的顶级 AI 模型，覆盖文本创作和图片生成两大场景。零成本，无限创作！
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      免费文本模型
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>Meta Llama 3.3 70B</strong> — Meta 最新开源大模型，全能型选手</li>
+                      <li><strong>DeepSeek V3</strong> — 深度求索，强推理能力</li>
+                      <li><strong>Google Gemma 3 27B</strong> — Google 开源模型，131K 超长上下文</li>
+                      <li><strong>NVIDIA Nemotron 3 Super</strong> — 543B 参数，262K 上下文</li>
+                      <li><strong>Mistral Small 3.1 24B</strong> — Mistral AI 出品，128K 上下文</li>
+                      <li><strong>OpenAI GPT-OSS 120B</strong> — OpenAI 开源 120B 模型</li>
+                      <li><strong>Qwen3 Coder 480B</strong> — 通义千问超大 MoE 模型</li>
+                      <li><strong>Nous Hermes 3 405B</strong> — 最大免费模型</li>
+                    </ul>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      免费图片生成模型
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>FLUX.2 Pro / Max / Flex / Klein</strong> — Black Forest Labs 出品，业界领先的图片生成模型</li>
+                      <li><strong>Seedream 4.5</strong> — ByteDance 字节跳动出品，原生中英双语支持</li>
+                    </ul>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      所有免费模型均可在工具箱中直接使用，无需消耗积分。前往<strong>工具箱</strong>立即体验！
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      We're excited to announce that xPilot now includes multiple <strong>completely free</strong> top-tier AI models for both text generation and image creation. Zero cost, unlimited creativity!
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      Free Text Models
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>Meta Llama 3.3 70B</strong> — Meta&apos;s latest open-source model, strong all-rounder</li>
+                      <li><strong>DeepSeek V3</strong> — Powerful reasoning capabilities</li>
+                      <li><strong>Google Gemma 3 27B</strong> — 131K context window</li>
+                      <li><strong>NVIDIA Nemotron 3 Super</strong> — 543B parameters, 262K context</li>
+                      <li><strong>Mistral Small 3.1 24B</strong> — By Mistral AI, 128K context</li>
+                      <li><strong>OpenAI GPT-OSS 120B</strong> — OpenAI&apos;s open-source 120B model</li>
+                      <li><strong>Qwen3 Coder 480B</strong> — Massive MoE model by Alibaba</li>
+                      <li><strong>Nous Hermes 3 405B</strong> — Largest free model available</li>
+                    </ul>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+                      Free Image Generation Models
+                    </h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
+                      <li><strong>FLUX.2 Pro / Max / Flex / Klein</strong> — By Black Forest Labs, industry-leading image generation</li>
+                      <li><strong>Seedream 4.5</strong> — By ByteDance, native Chinese &amp; English support</li>
+                    </ul>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      All free models are available directly in the Toolbox with no credit cost. Head to the <strong>Toolbox</strong> to try them now!
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* 2026-03 Partnership with Numix */}
           <div className="relative pl-8 pb-8 border-l-2 border-blue-500">
             <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500"></div>
@@ -385,7 +771,7 @@ export default async function ChangelogPage({
                     </h3>
                     <p className="text-gray-700 dark:text-gray-300 mb-4">
                       随着产品的不断发展，我们已经从单纯的"发帖调度工具"成长为一个全方位的{" "}
-                      <strong>社媒营销飞行副驾驶 AI</strong>。xPilot
+                      <strong>社媒营销自动化助理</strong>。xPilot
                       更好地体现了我们的产品定位：
                     </p>
                     <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
@@ -422,13 +808,13 @@ export default async function ChangelogPage({
                           xPilot
                         </p>
                         <p className="text-lg text-gray-600 dark:text-gray-400 mb-1">
-                          Your Social Marketing Copilot AI
+                          Your Social Media Marketing Automation Copilot
                         </p>
                         <p className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mt-4">
                           X 推创
                         </p>
                         <p className="text-base text-gray-600 dark:text-gray-400">
-                          你的社媒营销飞行副驾驶 AI
+                          你的社媒营销自动化助理
                         </p>
                       </div>
                     </div>
@@ -472,7 +858,7 @@ export default async function ChangelogPage({
                     <p className="text-gray-700 dark:text-gray-300 mb-4">
                       As our product has evolved, we've grown from a simple
                       "post scheduler" into a comprehensive{" "}
-                      <strong>social marketing copilot AI</strong>. xPilot
+                      <strong>social media marketing automation</strong>. xPilot
                       better reflects our product vision:
                     </p>
                     <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-4">
@@ -514,13 +900,13 @@ export default async function ChangelogPage({
                           xPilot
                         </p>
                         <p className="text-lg text-gray-600 dark:text-gray-400 mb-1">
-                          Your Social Marketing Copilot AI
+                          Your Social Media Marketing Automation Copilot
                         </p>
                         <p className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mt-4">
                           X 推创
                         </p>
                         <p className="text-base text-gray-600 dark:text-gray-400">
-                          你的社媒营销飞行副驾驶 AI
+                          你的社媒营销自动化助理
                         </p>
                       </div>
                     </div>

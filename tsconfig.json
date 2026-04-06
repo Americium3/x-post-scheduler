@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "weixin-worker"]
+  "exclude": ["node_modules", "weixin-worker", "workers"]
 }

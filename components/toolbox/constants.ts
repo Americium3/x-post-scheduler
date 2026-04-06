@@ -117,6 +117,38 @@ export const VIDEO_MODELS: StudioModel[] = [
 
 // ── Image models ──────────────────────────────────────────────────────────────
 export const IMAGE_MODELS_T2I: StudioModel[] = [
+  // OpenRouter Free Models
+  {
+    id: "openrouter/black-forest-labs/flux-2-pro",
+    label: "FLUX.2 Pro (Free)",
+    description: "Black Forest Labs · 免费",
+    tier: "fast",
+  },
+  {
+    id: "openrouter/black-forest-labs/flux-2-max",
+    label: "FLUX.2 Max (Free)",
+    description: "Black Forest Labs · 最高质量 · 免费",
+    tier: "fast",
+  },
+  {
+    id: "openrouter/black-forest-labs/flux-2-flex",
+    label: "FLUX.2 Flex (Free)",
+    description: "Black Forest Labs · 灵活 · 免费",
+    tier: "fast",
+  },
+  {
+    id: "openrouter/black-forest-labs/flux-2-klein-4b",
+    label: "FLUX.2 Klein 4B (Free)",
+    description: "Black Forest Labs · 轻量 · 免费",
+    tier: "fast",
+  },
+  {
+    id: "openrouter/bytedance-seed/seedream-v4.5",
+    label: "Seedream 4.5 (Free)",
+    description: "ByteDance · 中英双语 · 免费",
+    tier: "fast",
+  },
+  // Wavespeed Models
   {
     id: "bytedance/seedream-v4.5",
     label: "Seedream 4.5",
@@ -209,6 +241,12 @@ export const CLIENT_WAVESPEED_VIDEO_CHARGE_MULTIPLIER = Number(
 );
 
 export const CLIENT_WAVESPEED_MODEL_BASE_COST_CENTS: Record<string, number> = {
+  // OpenRouter free image models
+  "openrouter/black-forest-labs/flux-2-pro": 0,
+  "openrouter/black-forest-labs/flux-2-max": 0,
+  "openrouter/black-forest-labs/flux-2-flex": 0,
+  "openrouter/black-forest-labs/flux-2-klein-4b": 0,
+  "openrouter/bytedance-seed/seedream-v4.5": 0,
   // image
   "bytedance/seedream-v4.5": 4,
   "bytedance/seedream-v4": 4,

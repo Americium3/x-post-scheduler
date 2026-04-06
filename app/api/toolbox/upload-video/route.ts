@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { put } from "@/lib/r2";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";
-import { getBlobToken } from "@/lib/blob-config";
 
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200MB
 
@@ -46,10 +45,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const uploaded = await put(blobPath, buffer, {
-      access: "public",
       addRandomSuffix: true,
       contentType: file.type,
-      token: getBlobToken("public"),
     });
     return NextResponse.json({
       url: uploaded.url,

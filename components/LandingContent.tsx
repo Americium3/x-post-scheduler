@@ -4,6 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { IMAGE_MODELS, VIDEO_MODELS } from "@/lib/wavespeed";
+import { TEXT_MODELS } from "@/lib/ai-models";
+
+const FREE_IMAGE_MODELS = [
+  { id: "openrouter/black-forest-labs/flux-2-pro", label: "FLUX.2 Pro (Free)", provider: "Black Forest Labs" },
+  { id: "openrouter/black-forest-labs/flux-2-max", label: "FLUX.2 Max (Free)", provider: "Black Forest Labs" },
+  { id: "openrouter/black-forest-labs/flux-2-flex", label: "FLUX.2 Flex (Free)", provider: "Black Forest Labs" },
+  { id: "openrouter/black-forest-labs/flux-2-klein-4b", label: "FLUX.2 Klein 4B (Free)", provider: "Black Forest Labs" },
+  { id: "openrouter/bytedance-seed/seedream-v4.5", label: "Seedream 4.5 (Free)", provider: "ByteDance" },
+];
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import LandingEditor from "./landing/LandingEditor";
 
@@ -251,11 +260,22 @@ export default function LandingContent({
       { id: "seedance-2.0/text-to-video", label: "Seedance 2.0", mode: "video" },
       { id: "seedance-2.0/image-to-video", label: "Seedance 2.0 i2v", mode: "video" },
     );
-    ensure("OpenAI", "Text").models.push({
-      id: "gpt-4o",
-      label: "GPT-4o (tweet generation)",
-      mode: "text",
-    });
+    // Free image models via OpenRouter
+    for (const model of FREE_IMAGE_MODELS) {
+      ensure(model.provider, "Image/Video").models.push({
+        id: model.id,
+        label: model.label,
+        mode: "image",
+      });
+    }
+    // Text/LLM models
+    for (const model of TEXT_MODELS) {
+      ensure(model.provider, "Text").models.push({
+        id: model.id,
+        label: model.label,
+        mode: "text",
+      });
+    }
     return Array.from(map.values()).sort((a, b) =>
       a.name.localeCompare(b.name),
     );
@@ -316,7 +336,7 @@ export default function LandingContent({
 
           <div className="hidden md:flex items-center gap-4 text-sm">
             <Link
-              href={`${prefix}/gallery`}
+              href={`${prefix}/media-studio/gallery`}
               className="text-gray-600 dark:text-gray-400 hover:underline underline-offset-4"
             >
               {t("galleryFeed")}
@@ -326,6 +346,12 @@ export default function LandingContent({
               className="text-gray-600 dark:text-gray-400 hover:underline underline-offset-4"
             >
               {t("docs")}
+            </Link>
+            <Link
+              href={`${prefix}/pricing`}
+              className="text-gray-600 dark:text-gray-400 hover:underline underline-offset-4"
+            >
+              {locale === "zh" ? "定价" : "Pricing"}
             </Link>
             <Link
               href={`${prefix}/news`}
@@ -395,7 +421,7 @@ export default function LandingContent({
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex flex-col gap-2 text-sm">
               <Link
-                href={`${prefix}/gallery`}
+                href={`${prefix}/media-studio/gallery`}
                 onClick={() => setNavMenuOpen(false)}
                 className="rounded-md px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
@@ -407,6 +433,13 @@ export default function LandingContent({
                 className="rounded-md px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 {t("docs")}
+              </Link>
+              <Link
+                href={`${prefix}/pricing`}
+                onClick={() => setNavMenuOpen(false)}
+                className="rounded-md px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {locale === "zh" ? "定价" : "Pricing"}
               </Link>
               <Link
                 href={`${prefix}/news`}
@@ -455,22 +488,22 @@ export default function LandingContent({
         )}
       </header>
 
-      {/* Numix Partnership Announcement */}
-      <div className="bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-b border-purple-200 dark:border-purple-800">
+      {/* MCP Support Announcement */}
+      <div className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-b border-blue-200 dark:border-blue-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-center">
           <p className="text-sm sm:text-base text-gray-900 dark:text-white">
             <span className="font-semibold">
-              🤝 {lang === "zh" ? "新合作" : "New Partnership"}
+              {lang === "zh" ? "新功能" : "NEW"}
             </span>
             {" · "}
             {lang === "zh"
-              ? "xPilot 与税务科技公司 Numix 达成战略合作！AI 营销 + 智能财税，助力创业者一站式增长。"
-              : "xPilot partners with Numix! AI marketing + smart tax solutions for entrepreneurs."}{" "}
+              ? "xPilot 现已支持 MCP 协议！在 Claude Desktop、Claude Code 中直接生成图片、视频和帖子。"
+              : "xPilot now supports MCP! Generate images, videos, and posts directly from Claude Desktop & Claude Code."}{" "}
             <Link
-              href={`${prefix}/changelog`}
-              className="text-purple-600 dark:text-purple-400 hover:underline font-medium"
+              href={`${prefix}/docs/mcp`}
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
-              {lang === "zh" ? "了解详情 →" : "Learn more →"}
+              {lang === "zh" ? "查看文档 →" : "View docs →"}
             </Link>
           </p>
         </div>
@@ -478,20 +511,22 @@ export default function LandingContent({
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight">
+        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
           {t("heroTitle")}
           {highlight && (
             <>
-              <br className="hidden sm:block" />
-              <span className="text-blue-600 dark:text-blue-400">
-                {" "}
+              {" "}
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 {highlight}
               </span>
             </>
           )}
         </h2>
-        <p className="mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+        <p className="mt-6 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
           {t("heroSubtitle")}
+        </p>
+        <p className="mt-4 text-sm font-medium text-gray-400 dark:text-gray-500 tracking-wide">
+          {t("heroStats")}
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

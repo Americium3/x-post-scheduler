@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { isVerifiedMember } from "@/lib/subscription";
+import DashboardShell from "@/components/DashboardShell";
 
 type Lang = "en" | "zh";
 
@@ -19,6 +20,8 @@ type GalleryItem = {
   aspectRatio: string | null;
   mimeType: string;
   isPublic: boolean;
+  endpointId?: string;
+  endpointModel?: string;
   createdAt: string;
   user?: {
     id?: string;
@@ -88,10 +91,25 @@ const TEXT = {
   },
 } as const;
 
+/** Strip provider prefix from model ID */
+function stripProviderPrefix(modelId: string): string {
+  const prefixes = ["wavespeed-ai/", "bytedance/", "alibaba/", "kwaivgi/", "byteplus/", "openrouter/"];
+  for (const p of prefixes) {
+    if (modelId.startsWith(p)) return modelId.slice(p.length);
+  }
+  return modelId;
+}
+
+/** Strip internal fields (provider info, poll URLs, task IDs) from generation metadata */
 function toPrettyJson(raw: string | null) {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
+    if (typeof parsed === "object" && parsed !== null) {
+      const { provider, pollUrl, taskId, backgroundTask, syncMode, byok, ...visible } = parsed;
+      if (Object.keys(visible).length === 0) return null;
+      return JSON.stringify(visible, null, 2);
+    }
     return JSON.stringify(parsed, null, 2);
   } catch {
     return raw;
@@ -143,13 +161,13 @@ export default function GalleryDetailClient({ id }: { id: string }) {
   const generationMetaPretty = useMemo(() => toPrettyJson(item?.generationMeta ?? null), [item?.generationMeta]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
+    <DashboardShell>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t.title}</h1>
           </div>
-          <Link href="/gallery" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+          <Link href="/media-studio/gallery" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
             {t.back}
           </Link>
         </div>
@@ -173,20 +191,27 @@ export default function GalleryDetailClient({ id }: { id: string }) {
         )}
 
         {!loading && item && (
-          <div className="space-y-4">
-            <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t.generated}
-              </div>
-              <div className="p-4">
-                {item.type === "video" ? (
-                  <video src={item.blobUrl} controls className="w-full rounded-lg bg-black" />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.blobUrl} alt={item.prompt} className="w-full rounded-lg" />
-                )}
-              </div>
-            </section>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+            {/* Left: Preview + Input */}
+            <div className="space-y-4">
+              <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {t.generated}
+                </div>
+                <div className="p-4">
+                  {item.type === "video" ? (
+                    <video src={item.blobUrl} controls className="w-full rounded-lg bg-black" style={{ maxHeight: "65vh" }} />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.blobUrl} alt={item.prompt} className="w-full rounded-lg" style={{ maxHeight: "65vh", objectFit: "contain" }} />
+                  )}
+                </div>
+              </section>
+
+            </div>
+
+            {/* Right: Metadata sidebar */}
+            <div className="space-y-4">
 
             {/* Author */}
             <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
@@ -230,61 +255,83 @@ export default function GalleryDetailClient({ id }: { id: string }) {
               </div>
             </section>
 
-            <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200">
-                {t.original}
-              </div>
-              <div className="p-4">
-                {item.inputImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.inputImageUrl} alt="input" className="w-full rounded-lg" />
-                ) : (
-                  <p className="text-sm text-gray-500">{t.noOriginal}</p>
+            {/* Input image */}
+            {item.inputImageUrl && (
+              <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {t.original}
+                </div>
+                <div className="p-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.inputImageUrl} alt="input" className="w-full rounded-lg" style={{ maxHeight: "200px", objectFit: "contain" }} />
+                </div>
+              </section>
+            )}
+
+            {/* Prompt */}
+            <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-2">
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t.prompt}</h2>
+              <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{item.prompt}</p>
+            </section>
+
+            {/* Metadata */}
+            <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-2">
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t.metadata}</h2>
+              <dl className="space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">{t.model}</dt>
+                  <dd className="text-gray-800 dark:text-gray-200 font-medium text-right">{item.modelLabel}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">{t.modelId}</dt>
+                  <dd className="text-gray-600 dark:text-gray-400 font-mono text-xs text-right">{stripProviderPrefix(item.modelId)}</dd>
+                </div>
+                {item.endpointId && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">{lang === "zh" ? "接入点" : "Endpoint"}</dt>
+                    <dd className="text-gray-600 dark:text-gray-400 font-mono text-xs text-right">{item.endpointId}</dd>
+                  </div>
                 )}
-              </div>
+                {item.endpointModel && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">{lang === "zh" ? "推理模型" : "Inference Model"}</dt>
+                    <dd className="text-gray-600 dark:text-gray-400 font-mono text-xs text-right">{item.endpointModel}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">{t.type}</dt>
+                  <dd className="text-gray-800 dark:text-gray-200">{item.type}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">{t.aspect}</dt>
+                  <dd className="text-gray-800 dark:text-gray-200">{item.aspectRatio ?? "-"}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">{t.visibility}</dt>
+                  <dd className={item.isPublic ? "text-green-600" : "text-gray-400"}>{item.isPublic ? t.public : t.private}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">{t.created}</dt>
+                  <dd className="text-gray-600 dark:text-gray-400 text-xs">{new Date(item.createdAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}</dd>
+                </div>
+              </dl>
             </section>
 
-            <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t.process}</h2>
-              <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-                <p><span className="font-medium">1. {t.stepInput}:</span> {item.inputImageUrl ? "Image" : "Prompt only"}</p>
-                <p><span className="font-medium">2. {t.stepModel}:</span> {item.modelLabel} ({item.modelId})</p>
-                <p><span className="font-medium">3. {t.stepOutput}:</span> {item.type.toUpperCase()} ({item.aspectRatio ?? "-"})</p>
-              </div>
-            </section>
-
-            <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t.metadata}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">{t.type}:</span> {item.type}</p>
-                <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">{t.model}:</span> {item.modelLabel}</p>
-                <p className="text-gray-700 dark:text-gray-300 break-all"><span className="font-medium">{t.modelId}:</span> {item.modelId}</p>
-                <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">{t.aspect}:</span> {item.aspectRatio ?? "-"}</p>
-                <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">{t.visibility}:</span> {item.isPublic ? t.public : t.private}</p>
-                <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">{t.created}:</span> {new Date(item.createdAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}</p>
-              </div>
-
-              <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                <p className="font-medium">{t.prompt}</p>
-                <p className="whitespace-pre-wrap break-words">{item.prompt}</p>
-              </div>
-
-              <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                <p className="font-medium">{t.source}</p>
-                <a className="text-blue-600 dark:text-blue-400 break-all hover:underline" href={item.sourceUrl} target="_blank" rel="noreferrer">
-                  {item.sourceUrl}
-                </a>
-              </div>
-
-              {generationMetaPretty && (
+            {generationMetaPretty && (
+              <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 space-y-2">
+                <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Generation Details</h2>
                 <pre className="text-xs overflow-x-auto rounded-lg bg-gray-100 dark:bg-gray-900 p-3 text-gray-700 dark:text-gray-200">
                   {generationMetaPretty}
                 </pre>
-              )}
-            </section>
+              </section>
+            )}
+
+            {/* end right sidebar */}
+            </div>
+          {/* end grid */}
           </div>
         )}
       </div>
-    </div>
+    </DashboardShell>
   );
 }

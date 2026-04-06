@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { put } from "@/lib/r2";
 import { prisma } from "@/lib/db";
 import { downloadVideo, resolveVideoUrls } from "@/lib/weixin-worker-client";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";

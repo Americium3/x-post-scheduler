@@ -15,6 +15,7 @@ import {
 import type { TierKey } from "@/lib/subscription";
 import TeamSection from "@/components/TeamSection";
 import ReferralSection from "@/components/ReferralSection";
+import DashboardShell from "@/components/DashboardShell";
 
 interface XAccount {
   id: string;
@@ -87,7 +88,15 @@ interface CreditData {
   }[];
 }
 
-type AppLanguage = "en" | "zh";
+type AppLanguage = "en" | "zh" | "es" | "ja" | "ko";
+
+const LANGUAGE_OPTIONS = [
+  { code: "en" as const, label: "English" },
+  { code: "zh" as const, label: "中文" },
+  { code: "es" as const, label: "Español" },
+  { code: "ja" as const, label: "日本語" },
+  { code: "ko" as const, label: "한국어" },
+];
 
 export default function SettingsPage() {
   const { user, isLoading: authLoading } = useUser();
@@ -486,8 +495,8 @@ export default function SettingsPage() {
       if ((data.accounts?.length ?? 0) > 0) {
         setSetAsDefault(false);
       }
-      if (data.language === "zh" || data.language === "en") {
-        setAppLanguage(data.language);
+      if (["en", "zh", "es", "ja", "ko"].includes(data.language)) {
+        setAppLanguage(data.language as AppLanguage);
       }
       if (usageRes.ok) {
         setUsage(await usageRes.json());
@@ -1030,19 +1039,14 @@ export default function SettingsPage() {
       });
       if (!res.ok) throw new Error("Failed to save");
       // Navigate to the correct locale URL
-      const currentIsZh = pathname.startsWith("/zh");
-      const wantZh = appLanguage === "zh";
-      if (currentIsZh !== wantZh) {
-        const pathWithoutLocale = currentIsZh
-          ? pathname.slice(3) || "/"
-          : pathname;
-        const newPath = wantZh ? `/zh${pathWithoutLocale}` : pathWithoutLocale;
+      const localePattern = /^\/(en|zh|es|ja|ko)/;
+      const pathWithoutLocale = pathname.replace(localePattern, "") || "/";
+      const newPath = appLanguage === "en" ? pathWithoutLocale : `/${appLanguage}${pathWithoutLocale}`;
+      if (newPath !== pathname) {
         router.push(newPath);
       } else {
-        setMessage({
-          type: "success",
-          text: tr("Language updated to English.", "语言已更新为中文。"),
-        });
+        const langLabel = LANGUAGE_OPTIONS.find((l) => l.code === appLanguage)?.label ?? appLanguage;
+        setMessage({ type: "success", text: `Language updated to ${langLabel}.` });
       }
     } catch {
       setMessage({
@@ -1082,7 +1086,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <DashboardShell>
+      <div>
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1181,8 +1186,9 @@ export default function SettingsPage() {
                 onChange={(e) => setAppLanguage(e.target.value as AppLanguage)}
                 className="w-full sm:w-56 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="en">English</option>
-                <option value="zh">简体中文</option>
+                {LANGUAGE_OPTIONS.map((l) => (
+                  <option key={l.code} value={l.code}>{l.label}</option>
+                ))}
               </select>
               <button
                 type="button"
@@ -2812,5 +2818,6 @@ export default function SettingsPage() {
         </div>
       </main>
     </div>
+    </DashboardShell>
   );
 }

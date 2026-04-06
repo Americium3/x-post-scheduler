@@ -84,6 +84,12 @@ const WAVESPEED_DEFAULT_IMAGE_BASE_COST_CENTS = 5; // $0.05
 const WAVESPEED_DEFAULT_VIDEO_BASE_COST_CENTS = 30; // $0.30
 
 const WAVESPEED_MODEL_BASE_COST_CENTS: Record<string, number> = {
+  // OpenRouter free image models
+  "openrouter/black-forest-labs/flux-2-pro": 0,
+  "openrouter/black-forest-labs/flux-2-max": 0,
+  "openrouter/black-forest-labs/flux-2-flex": 0,
+  "openrouter/black-forest-labs/flux-2-klein-4b": 0,
+  "openrouter/bytedance-seed/seedream-v4.5": 0,
   // image t2i
   "bytedance/seedream-v4.5": 4, // $0.04
   "bytedance/seedream-v4": 4, // keep aligned with 4.5

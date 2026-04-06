@@ -6,6 +6,7 @@ interface GenerateResult {
   content?: string;
   suggestions?: string[];
   media_asset_id?: string;
+  media_asset_ids?: (string | null)[];
   pipeline_log?: Record<string, string>;
   error?: string;
 }

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { format } from "date-fns";
+import DashboardShell from "@/components/DashboardShell";
 
 /* ------------------------------------------------------------------ */
 /*  YouTube Upload Form                                               */
@@ -125,10 +126,53 @@ function YouTubeUploadForm({
 
     setIsSubmitting(true);
     try {
+      // Handle direct file upload (immediate posting only)
+      if (videoSource === "upload" && uploadedFile && scheduleType === "now") {
+        const formData = new FormData();
+        formData.append("file", uploadedFile);
+        formData.append("title", title);
+        formData.append("description", description || "");
+        formData.append("visibility", visibility);
+        formData.append("youtubeAccountId", selectedAccountId);
+        formData.append("postImmediately", "true");
+
+        const res = await fetch("/api/youtube/posts", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to upload video to YouTube");
+        }
+
+        // Show success message
+        setSuccessMessage(t("youtubeUploadSuccess") || "Video uploaded successfully!");
+
+        // Reset form
+        setTitle("");
+        setDescription("");
+        setVisibility("public");
+        setScheduleType("now");
+        setScheduledDate("");
+        setScheduledTime("");
+        setUploadedFile(null);
+        setSelectedGalleryVideo(null);
+        setUploadProgress(0);
+
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccessMessage(""), 5000);
+
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      // Handle scheduled posts or gallery videos (requires URL)
       let videoUrl = null;
 
-      // Handle file upload
       if (videoSource === "upload" && uploadedFile) {
+        // For scheduled posts, we still need to upload to R2 first
         const formData = new FormData();
         formData.append("file", uploadedFile);
 
@@ -173,11 +217,11 @@ function YouTubeUploadForm({
       }
 
       // Show success message
-      const message = scheduleType === "now" 
+      const message = scheduleType === "now"
         ? (t("youtubeUploadSuccess") || "Video uploaded successfully!")
         : (t("youtubeScheduleSuccess") || "Video scheduled successfully!");
       setSuccessMessage(message);
-      
+
       // Reset form
       setTitle("");
       setDescription("");
@@ -188,15 +232,15 @@ function YouTubeUploadForm({
       setUploadedFile(null);
       setSelectedGalleryVideo(null);
       setUploadProgress(0);
-      
+
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(""), 5000);
-      
+
       // Optionally reload gallery if user was using it
       if (videoSource === "myItems" || videoSource === "community") {
         loadGalleryVideos();
       }
-      
+
       // Scroll to top to show success message
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -293,33 +337,30 @@ function YouTubeUploadForm({
           <button
             type="button"
             onClick={() => setVideoSource("upload")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-              videoSource === "upload"
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${videoSource === "upload"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-            }`}
+              }`}
           >
             {t("youtubeUpload")}
           </button>
           <button
             type="button"
             onClick={() => setVideoSource("myItems")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-              videoSource === "myItems"
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${videoSource === "myItems"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-            }`}
+              }`}
           >
             {t("youtubeMyItems")}
           </button>
           <button
             type="button"
             onClick={() => setVideoSource("community")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-              videoSource === "community"
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${videoSource === "community"
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-            }`}
+              }`}
           >
             {t("youtubeCommunity")}
           </button>
@@ -401,11 +442,10 @@ function YouTubeUploadForm({
                   <div
                     key={video.id}
                     onClick={() => setSelectedGalleryVideo(video.blobUrl)}
-                    className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedGalleryVideo === video.blobUrl
+                    className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${selectedGalleryVideo === video.blobUrl
                         ? "border-blue-500 ring-2 ring-blue-500"
                         : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                    }`}
+                      }`}
                   >
                     <video
                       src={video.blobUrl}
@@ -653,52 +693,54 @@ export default function YouTubeSchedulePage() {
   const prefix = locale === "zh" ? "/zh" : "";
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-              {t("title")} - YouTube
-            </h1>
-            <div className="flex items-center gap-3">
-              <div className="flex gap-2">
+    <DashboardShell>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 shadow">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                {t("title")} - YouTube
+              </h1>
+              <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                  <Link
+                    href={`${prefix}/schedule/x`}
+                    className="px-3 py-1.5 rounded-lg font-medium transition-colors text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  >
+                    X
+                  </Link>
+                  <button
+                    className="px-3 py-1.5 rounded-lg font-medium transition-colors text-sm bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    YouTube
+                  </button>
+                </div>
                 <Link
-                  href={`${prefix}/schedule/x`}
-                  className="px-3 py-1.5 rounded-lg font-medium transition-colors text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  href="/dashboard"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 >
-                  X
+                  {t("cancel")}
                 </Link>
-                <button
-                  className="px-3 py-1.5 rounded-lg font-medium transition-colors text-sm bg-red-600 hover:bg-red-700 text-white"
-                >
-                  YouTube
-                </button>
               </div>
-              <Link
-                href="/dashboard"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                {t("cancel")}
-              </Link>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <Suspense
-        fallback={
+        <Suspense
+          fallback={
+            <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+              <div className="animate-pulse">
+                <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-48 mb-6"></div>
+                <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-32"></div>
+              </div>
+            </main>
+          }
+        >
           <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <div className="animate-pulse">
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-48 mb-6"></div>
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-32"></div>
-            </div>
+            <YouTubeScheduleForm />
           </main>
-        }
-      >
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <YouTubeScheduleForm />
-        </main>
-      </Suspense>
-    </div>
+        </Suspense>
+      </div>
+    </DashboardShell>
   );
 }

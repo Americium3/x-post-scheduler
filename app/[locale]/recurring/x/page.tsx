@@ -12,6 +12,7 @@ import {
   type TierKey,
 } from "@/lib/subscription";
 import { TEXT_MODELS, DEFAULT_TEXT_MODEL } from "@/lib/ai-models";
+import DashboardShell from "@/components/DashboardShell";
 
 interface Trend {
   name: string;
@@ -703,6 +704,7 @@ export default function RecurringPage() {
   };
 
   return (
+    <DashboardShell>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -1767,5 +1769,6 @@ export default function RecurringPage() {
         </div>
       </main>
     </div>
+    </DashboardShell>
   );
 }
