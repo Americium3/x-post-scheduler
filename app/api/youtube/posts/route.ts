@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/auth0";
-import { uploadVideo } from "@/lib/youtube-client";
-import { decrypt } from "@/lib/encryption";
+import { uploadVideo, updateVideoVisibility } from "@/lib/youtube-client";
+import { decrypt, encrypt } from "@/lib/encryption";
 
 export async function POST(request: NextRequest) {
   let user;
@@ -67,57 +67,79 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (postImmediately) {
-    // Upload video to YouTube immediately
-    try {
-      // Fetch the video file from the URL
-      const videoResponse = await fetch(videoUrl);
-      if (!videoResponse.ok) {
-        return NextResponse.json(
-          { error: "Failed to fetch video file" },
-          { status: 400 }
-        );
-      }
+  // Fetch the video file from the URL
+  try {
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      return NextResponse.json(
+        { error: "Failed to fetch video file" },
+        { status: 400 }
+      );
+    }
 
-      const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+    const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
 
-      // Decrypt credentials
-      const credentials = {
-        clientId: decrypt(youtubeAccount.clientId),
-        clientSecret: decrypt(youtubeAccount.clientSecret),
-        refreshToken: decrypt(youtubeAccount.refreshToken),
-        accessToken: youtubeAccount.accessToken ? decrypt(youtubeAccount.accessToken) : undefined,
-        accessTokenExpiry: youtubeAccount.accessTokenExpiry || undefined,
-      };
+    // Decrypt credentials
+    const credentials = {
+      clientId: decrypt(youtubeAccount.clientId),
+      clientSecret: decrypt(youtubeAccount.clientSecret),
+      refreshToken: decrypt(youtubeAccount.refreshToken),
+      accessToken: youtubeAccount.accessToken ? decrypt(youtubeAccount.accessToken) : undefined,
+      accessTokenExpiry: youtubeAccount.accessTokenExpiry || undefined,
+    };
 
-      const result = await uploadVideo(
-        videoBuffer,
-        title,
-        description || "",
+    // Always upload as private first
+    const result = await uploadVideo(
+      videoBuffer,
+      title,
+      description || "",
+      "private",
+      credentials
+    );
+
+    if (!result.success) {
+      const post = await prisma.post.create({
+        data: {
+          content: title,
+          platform: "youtube",
+          videoTitle: title,
+          videoDescription: description || "",
+          videoVisibility: visibility || "public",
+          mediaUrls: JSON.stringify([videoUrl]),
+          status: "failed",
+          error: result.error || "Failed to upload video",
+          youtubeAccountId: youtubeAccount.id,
+          userId: user.id,
+        },
+      });
+
+      return NextResponse.json(
+        { error: result.error || "Failed to upload video", post },
+        { status: 500 }
+      );
+    }
+
+    // Update access token if refreshed
+    if (result.newAccessToken && result.newExpiry) {
+      await prisma.youTubeAccount.update({
+        where: { id: youtubeAccount.id },
+        data: {
+          accessToken: encrypt(result.newAccessToken),
+          accessTokenExpiry: result.newExpiry,
+        },
+      });
+    }
+
+    if (postImmediately) {
+      // If posting immediately, update visibility to target visibility
+      const visibilityResult = await updateVideoVisibility(
+        result.videoId!,
         visibility || "public",
         credentials
       );
 
-      if (!result.success) {
-        const post = await prisma.post.create({
-          data: {
-            content: title,
-            platform: "youtube",
-            videoTitle: title,
-            videoDescription: description || "",
-            videoVisibility: visibility || "public",
-            mediaUrls: JSON.stringify([videoUrl]),
-            status: "failed",
-            error: result.error || "Failed to upload video",
-            youtubeAccountId: youtubeAccount.id,
-            userId: user.id,
-          },
-        });
-
-        return NextResponse.json(
-          { error: result.error || "Failed to upload video", post },
-          { status: 500 }
-        );
+      if (!visibilityResult.success) {
+        console.warn(`Failed to update visibility for video ${result.videoId}, but video was uploaded`);
       }
 
       const post = await prisma.post.create({
@@ -137,32 +159,33 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(post);
-    } catch (error) {
-      console.error("YouTube post creation error:", error);
-      return NextResponse.json(
-        { error: "Failed to create YouTube post" },
-        { status: 500 }
-      );
     }
+
+    // Schedule for later - video already uploaded as private, will be made public at scheduledAt
+    const post = await prisma.post.create({
+      data: {
+        content: title,
+        platform: "youtube",
+        videoTitle: title,
+        videoDescription: description || "",
+        videoVisibility: visibility || "public",
+        mediaUrls: null,
+        status: "scheduled",
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+        youtubeVideoId: result.videoId,
+        youtubeAccountId: youtubeAccount.id,
+        userId: user.id,
+      },
+    });
+
+    return NextResponse.json(post);
+  } catch (error) {
+    console.error("YouTube post creation error:", error);
+    return NextResponse.json(
+      { error: "Failed to create YouTube post" },
+      { status: 500 }
+    );
   }
-
-  // Schedule for later - only save to database, don't call YouTube API
-  const post = await prisma.post.create({
-    data: {
-      content: title,
-      platform: "youtube",
-      videoTitle: title,
-      videoDescription: description || "",
-      videoVisibility: visibility || "public",
-      mediaUrls: JSON.stringify([videoUrl]),
-      status: "scheduled",
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      youtubeAccountId: youtubeAccount.id,
-      userId: user.id,
-    },
-  });
-
-  return NextResponse.json(post);
 }
 
 // Handle direct file upload (multipart/form-data)
@@ -217,44 +240,67 @@ async function handleFileUpload(request: NextRequest, user: { id: string }) {
     const arrayBuffer = await file.arrayBuffer();
     const videoBuffer = Buffer.from(arrayBuffer);
 
-    if (postImmediately) {
-      // Upload video to YouTube immediately
-      const credentials = {
-        clientId: decrypt(youtubeAccount.clientId),
-        clientSecret: decrypt(youtubeAccount.clientSecret),
-        refreshToken: decrypt(youtubeAccount.refreshToken),
-        accessToken: youtubeAccount.accessToken ? decrypt(youtubeAccount.accessToken) : undefined,
-        accessTokenExpiry: youtubeAccount.accessTokenExpiry || undefined,
-      };
+    // Decrypt credentials
+    const credentials = {
+      clientId: decrypt(youtubeAccount.clientId),
+      clientSecret: decrypt(youtubeAccount.clientSecret),
+      refreshToken: decrypt(youtubeAccount.refreshToken),
+      accessToken: youtubeAccount.accessToken ? decrypt(youtubeAccount.accessToken) : undefined,
+      accessTokenExpiry: youtubeAccount.accessTokenExpiry || undefined,
+    };
 
-      const result = await uploadVideo(
-        videoBuffer,
-        title,
-        description || "",
+    // Always upload as private first
+    const result = await uploadVideo(
+      videoBuffer,
+      title,
+      description || "",
+      "private",
+      credentials
+    );
+
+    if (!result.success) {
+      const post = await prisma.post.create({
+        data: {
+          content: title,
+          platform: "youtube",
+          videoTitle: title,
+          videoDescription: description || "",
+          videoVisibility: visibility,
+          mediaUrls: null,
+          status: "failed",
+          error: result.error || "Failed to upload video",
+          youtubeAccountId: youtubeAccount.id,
+          userId: user.id,
+        },
+      });
+
+      return NextResponse.json(
+        { error: result.error || "Failed to upload video", post },
+        { status: 500 }
+      );
+    }
+
+    // Update access token if refreshed
+    if (result.newAccessToken && result.newExpiry) {
+      await prisma.youTubeAccount.update({
+        where: { id: youtubeAccount.id },
+        data: {
+          accessToken: encrypt(result.newAccessToken),
+          accessTokenExpiry: result.newExpiry,
+        },
+      });
+    }
+
+    if (postImmediately) {
+      // If posting immediately, update visibility to target visibility
+      const visibilityResult = await updateVideoVisibility(
+        result.videoId!,
         visibility,
         credentials
       );
 
-      if (!result.success) {
-        const post = await prisma.post.create({
-          data: {
-            content: title,
-            platform: "youtube",
-            videoTitle: title,
-            videoDescription: description || "",
-            videoVisibility: visibility,
-            mediaUrls: null,
-            status: "failed",
-            error: result.error || "Failed to upload video",
-            youtubeAccountId: youtubeAccount.id,
-            userId: user.id,
-          },
-        });
-
-        return NextResponse.json(
-          { error: result.error || "Failed to upload video", post },
-          { status: 500 }
-        );
+      if (!visibilityResult.success) {
+        console.warn(`Failed to update visibility for video ${result.videoId}, but video was uploaded`);
       }
 
       const post = await prisma.post.create({
@@ -276,12 +322,24 @@ async function handleFileUpload(request: NextRequest, user: { id: string }) {
       return NextResponse.json(post);
     }
 
-    // For scheduled posts, we need to store the video somewhere
-    // Since we want to avoid R2, return an error for now
-    return NextResponse.json(
-      { error: "Direct file upload is only supported for immediate posting. For scheduled posts, please use gallery videos." },
-      { status: 400 }
-    );
+    // Schedule for later - video already uploaded as private, will be made public at scheduledAt
+    const post = await prisma.post.create({
+      data: {
+        content: title,
+        platform: "youtube",
+        videoTitle: title,
+        videoDescription: description || "",
+        videoVisibility: visibility,
+        mediaUrls: null,
+        status: "scheduled",
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+        youtubeVideoId: result.videoId,
+        youtubeAccountId: youtubeAccount.id,
+        userId: user.id,
+      },
+    });
+
+    return NextResponse.json(post);
   } catch (error) {
     console.error("File upload error:", error);
     return NextResponse.json(

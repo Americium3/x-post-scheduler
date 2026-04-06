@@ -126,15 +126,20 @@ function YouTubeUploadForm({
 
     setIsSubmitting(true);
     try {
-      // Handle direct file upload (immediate posting only)
-      if (videoSource === "upload" && uploadedFile && scheduleType === "now") {
+      // Handle direct file upload (both immediate and scheduled)
+      if (videoSource === "upload" && uploadedFile) {
         const formData = new FormData();
         formData.append("file", uploadedFile);
         formData.append("title", title);
         formData.append("description", description || "");
         formData.append("visibility", visibility);
         formData.append("youtubeAccountId", selectedAccountId);
-        formData.append("postImmediately", "true");
+        formData.append("postImmediately", scheduleType === "now" ? "true" : "false");
+        
+        if (scheduleType === "later") {
+          const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
+          formData.append("scheduledAt", scheduledAt);
+        }
 
         const res = await fetch("/api/youtube/posts", {
           method: "POST",
@@ -147,7 +152,10 @@ function YouTubeUploadForm({
         }
 
         // Show success message
-        setSuccessMessage(t("youtubeUploadSuccess") || "Video uploaded successfully!");
+        const message = scheduleType === "now"
+          ? (t("youtubeUploadSuccess") || "Video uploaded successfully!")
+          : (t("youtubeScheduleSuccess") || "Video scheduled successfully!");
+        setSuccessMessage(message);
 
         // Reset form
         setTitle("");
@@ -168,28 +176,9 @@ function YouTubeUploadForm({
         return;
       }
 
-      // Handle scheduled posts or gallery videos (requires URL)
-      let videoUrl = null;
-
-      if (videoSource === "upload" && uploadedFile) {
-        // For scheduled posts, we still need to upload to R2 first
-        const formData = new FormData();
-        formData.append("file", uploadedFile);
-
-        const uploadRes = await fetch("/api/toolbox/upload-video", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          const errorData = await uploadRes.json();
-          throw new Error(errorData.error || "Failed to upload video");
-        }
-
-        const uploadData = await uploadRes.json();
-        videoUrl = uploadData.url;
-      } else if (selectedGalleryVideo) {
-        videoUrl = selectedGalleryVideo;
+      // Handle gallery videos (requires URL)
+      if (!selectedGalleryVideo) {
+        throw new Error("No video selected");
       }
 
       let scheduledAt = null;
@@ -204,7 +193,7 @@ function YouTubeUploadForm({
           title,
           description,
           visibility,
-          videoUrl,
+          videoUrl: selectedGalleryVideo,
           postImmediately: scheduleType === "now",
           scheduledAt,
           youtubeAccountId: selectedAccountId,

@@ -328,6 +328,42 @@ export async function updateVideo(
 }
 
 /**
+ * Update only video visibility (privacy status)
+ */
+export async function updateVideoVisibility(
+  videoId: string,
+  visibility: "public" | "private" | "unlisted",
+  credentials: YouTubeCredentials
+): Promise<UploadResult & { newAccessToken?: string; newExpiry?: Date }> {
+  try {
+    const { youtube, needsTokenUpdate, newAccessToken, newExpiry } = await createYouTubeClient(credentials);
+
+    const response = await youtube.videos.update({
+      part: ["status"],
+      requestBody: {
+        id: videoId,
+        status: {
+          privacyStatus: visibility,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      videoId: response.data.id || undefined,
+      newAccessToken: needsTokenUpdate ? newAccessToken : undefined,
+      newExpiry: needsTokenUpdate ? newExpiry : undefined,
+    };
+  } catch (error) {
+    console.error("Error updating video visibility on YouTube:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
  * Get video statistics
  */
 export async function getVideoStats(
