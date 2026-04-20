@@ -62,6 +62,12 @@ const worker = {
         // Every slot (every 2 min): poll background media tasks
         await safeTrigger(env, "MediaTasks", "/api/toolbox/tasks/process");
 
+        // Process recurring YouTube schedules (every 2 min)
+        await safeTrigger(env, "Recurring-YouTube", "/api/cron/recurring-youtube");
+
+        // Process scheduled YouTube posts (every 2 min)
+        await safeTrigger(env, "YouTube-Post-Scheduler", "/api/scheduler/youtube-post");
+
         // Daily slots (01:00, 13:00, 23:00 UTC): scheduled posts + daily jobs
         if (hour === 1 || hour === 13 || hour === 23) {
           await safeTrigger(env, "Scheduler", "/api/scheduler");

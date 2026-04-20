@@ -20,8 +20,19 @@ export async function GET() {
     return unauthorizedResponse();
   }
 
-  const [accounts, legacyUser] = await Promise.all([
+  const [accounts, youtubeAccounts, legacyUser] = await Promise.all([
     listUserXAccounts(user.id),
+    prisma.youTubeAccount.findMany({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        channelTitle: true,
+        channelId: true,
+        isDefault: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
     prisma.user.findUnique({
       where: { id: user.id },
       select: {
@@ -44,6 +55,7 @@ export async function GET() {
   return NextResponse.json({
     hasCredentials: accounts.length > 0 || hasLegacyCredentials,
     accounts,
+    youtubeAccounts,
     language: legacyUser?.language ?? "en",
   });
 }
@@ -81,11 +93,13 @@ async function createAccount(request: NextRequest) {
     );
   }
 
-  const [existingCount, dbUser] = await Promise.all([
+  const [xCount, youtubeCount, dbUser] = await Promise.all([
     prisma.xAccount.count({ where: { userId: user.id } }),
+    prisma.youTubeAccount.count({ where: { userId: user.id } }),
     prisma.user.findUnique({ where: { id: user.id }, select: { subscriptionTier: true, subscriptionStatus: true } }),
   ]);
 
+  const existingCount = xCount + youtubeCount;
   const accountLimit = getAccountLimit(dbUser?.subscriptionTier);
   if (existingCount >= accountLimit) {
     return NextResponse.json(
