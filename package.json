@@ -2,6 +2,7 @@
   "name": "xpilot",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -11,7 +12,12 @@
     "scheduler": "npx tsx scripts/scheduler.ts",
     "postinstall": "prisma generate",
     "mcp:dev": "cd workers/mcp && npm run dev",
-    "mcp:deploy": "cd workers/mcp && npm run deploy"
+    "mcp:deploy": "cd workers/mcp && npm run deploy",
+    "electron": "electron .",
+    "electron:dev": "cross-env XPILOT_DESKTOP_URL=http://localhost:3000 electron .",
+    "electron:icon": "node electron/make-icon.js",
+    "electron:build:win": "electron-builder --win",
+    "electron:build": "electron-builder"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.54",
@@ -53,7 +59,10 @@
     "@types/node-cron": "^3.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.4",
+    "electron": "^42.3.3",
+    "electron-builder": "^26.8.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^6.19.2",
