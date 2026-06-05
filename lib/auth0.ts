@@ -12,6 +12,27 @@ export interface AuthenticatedUser {
 }
 
 export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
+  // Local-only dev bypass: lets you use the app without Auth0 setup.
+  // Guarded by NODE_ENV !== production AND an explicit env flag.
+  if (process.env.NODE_ENV !== "production" && process.env.DEV_AUTH_BYPASS === "1") {
+    const { prisma } = await import("./db");
+    const devUser = await prisma.user.upsert({
+      where: { auth0Sub: "dev|local" },
+      update: {},
+      create: { auth0Sub: "dev|local", email: "dev@local.test", name: "Dev User" },
+      select: {
+        id: true,
+        auth0Sub: true,
+        email: true,
+        name: true,
+        picture: true,
+        language: true,
+        weixinCookie: true,
+      },
+    });
+    return devUser;
+  }
+
   const session = await auth0.getSession();
   if (!session?.user) {
     return null;

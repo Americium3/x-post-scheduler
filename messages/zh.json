@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "仪表盘",
+    "chat": "AI 助手",
     "gallery": "作品展示",
     "toolbox": "媒体工作室",
     "generate": "AI 发帖调度",

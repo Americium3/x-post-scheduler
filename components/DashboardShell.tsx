@@ -18,6 +18,7 @@ export default function DashboardShell({
   const tUser = useTranslations("userMenu");
   const navLinks: { href: string; label: string; highlight?: boolean; indent?: boolean }[] = [
     { href: `${prefix}/dashboard`, label: locale === "zh" ? "仪表盘" : "Dashboard" },
+    { href: `${prefix}/chat`, label: tNav("chat"), highlight: true },
     { href: `${prefix}/media-studio`, label: tNav("toolbox") },
     { href: `${prefix}/media-studio/video`, label: tNav("video"), indent: true },
     { href: `${prefix}/media-studio/gallery/generate`, label: tNav("images"), indent: true },

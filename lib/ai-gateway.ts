@@ -11,7 +11,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { resolveTextModel } from "./ai-models";
 import type { TokenUsage } from "./usage-tracking";
 
-function getModel(modelId: string) {
+export function getModel(modelId: string) {
   if (modelId.startsWith("openrouter/")) {
     const openrouter = createOpenRouter({
       apiKey: process.env.OPENROUTER_API_KEY,

@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "Dashboard",
+    "chat": "AI Chat",
     "gallery": "Gallery",
     "toolbox": "Media Studio",
     "generate": "AI Post Scheduler",
